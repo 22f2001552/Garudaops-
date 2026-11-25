@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GARUDA OPS | Live Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="live.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-icon">✦</div><div><strong>GARUDA<span>OPS</span></strong><small>× DRDO AUTONOMY</small></div></div>
+  <div class="side-label">LIVE OPERATIONS</div>
+  <nav>
+    <a class="active" href="#overview">▦ <span>Mission Control</span></a>
+    <a href="#sensors">◉ <span>Sensor Feeds</span></a>
+    <a href="#flight">✈ <span>Flight Control</span></a>
+    <a href="#geospatial">⌖ <span>Geospatial Map</span></a>
+    <a href="#incidents">⚑ <span>Incidents</span></a>
+    <a href="#log">▤ <span>Flight Log</span></a>
+  </nav>
+  <div class="side-label" style="margin-top:22px">ANALYSIS</div>
+  <nav><a href="/replay">↺ <span>Replay &amp; Dataset</span></a></nav>
+  <div class="sidebar-bottom">
+    <div class="online-dot" id="linkBox">● <span id="linkText">CONNECTING…</span></div>
+    <div class="operator">GO <span>Operator Console<small>CipherCop 2026 · DYSL-AT</small></span></div>
+  </div>
+</aside>
+
+<div class="main">
+<header class="topbar">
+  <div class="crumb">OPERATIONS <span>/</span> <b>Live Mission Control</b></div>
+  <div class="top-right">
+    <span class="rec-badge" id="recBadge" hidden>● REC <b id="recTime">00:00</b></span>
+    <span class="mode" id="backendPill">● BRIDGE</span>
+    <span class="mode mode-flight" id="modePill">IDLE</span>
+    <span id="clock">--:--:--</span><div class="avatar">GO</div>
+  </div>
+</header>
+
+<div class="content" id="overview">
+  <div class="intro">
+    <div>
+      <div class="eyebrow">AUTONOMOUS OBSTACLE AVOIDANCE <span> / </span> AERIAL INTELLIGENCE</div>
+      <h1>Mission Control <span class="title-star">✳</span></h1>
+      <p>Dashboard commands drive the drone in AirSim; depth-based avoidance (DYSL-AT/DRDO) runs on every frame.</p>
+    </div>
+    <div class="intro-actions">
+      <button class="filebtn rec-btn" id="recBtn">● Record flight</button>
+      <a class="filebtn outline" href="/replay">↺ Replay sessions</a>
+    </div>
+  </div>
+
+  <div class="disclaimer" id="bridgeNote"><b>SIMULATION / RESEARCH PROTOTYPE</b> <span id="bridgeText">Connecting to the drone bridge…</span></div>
+
+  <div class="metrics live-metrics">
+    <div class="metric"><div class="metric-head">ALTITUDE <span>⇡</span></div><strong id="mAlt">—</strong><div class="metric-foot" id="mAltFoot">metres AGL</div></div>
+    <div class="metric"><div class="metric-head">GROUND SPEED <span>➶</span></div><strong id="mSpd">—</strong><div class="metric-foot">m/s</div></div>
+    <div class="metric"><div class="metric-head">HEADING <span>◴</span></div><strong id="mHdg">—</strong><div class="metric-foot" id="mZone">—</div></div>
+    <div class="metric"><div class="metric-head">FWD CLEARANCE <span>◫</span></div><strong id="mClr">—</strong><div class="metric-foot" id="mClrFoot">centre sector min depth</div></div>
+    <div class="metric"><div class="metric-head">PEOPLE IN VIEW <span>♙</span></div><strong id="mPpl">—</strong><div class="metric-foot" id="mVeh">vehicles —</div></div>
+    <div class="metric"><div class="metric-head">CROWD CONDITION <span>◈</span></div><strong id="mCrowd" class="crowd-value">—</strong><div class="metric-foot" id="mCrowdFoot">within crowd range</div></div>
+  </div>
+
+  <div class="live-grid">
+    <!-- 01 SENSOR FEEDS -->
+    <section class="panel" id="sensors">
+      <div class="panel-head">
+        <div><span class="section-kicker">01 / LIVE VISION</span><h2>Drone Sensor Feeds</h2></div>
+        <span class="pill cyan" id="fpsPill">◉ — FPS</span>
+      </div>
+      <div class="tabs" id="viewTabs">
+        <button data-view="detection" class="on">Object detection</button>
+        <button data-view="depth">Depth heatmap</button>
+        <button data-view="crowd">Crowd density</button>
+        <button data-view="thermal">Thermal</button>
+        <button data-view="edges">Edges</button>
+        <button data-view="quad">Quad view</button>
+      </div>
+      <div class="feed">
+        <img id="feed" alt="Live drone camera">
+        <div class="feed-wait" id="feedWait"><div class="radar"><div class="radar-sweep"></div><div class="radar-dot d1"></div><div class="radar-dot d2"></div></div><b>WAITING FOR CAMERA STREAM</b></div>
+        <div class="hud bottom-left" id="hud">—</div>
+        <div class="hud top-right-hud" id="hudMode">—</div>
+      </div>
+      <div class="sectors">
+        <div class="sector" id="secL"><small>LEFT</small><div class="bar"><i></i></div><b>—</b></div>
+        <div class="sector" id="secC"><small>CENTRE</small><div class="bar"><i></i></div><b>—</b></div>
+        <div class="sector" id="secR"><small>RIGHT</small><div class="bar"><i></i></div><b>—</b></div>
+      </div>
+      <div class="decision"><span>AVOIDANCE DECISION</span><b id="decision">—</b></div>
+    </section>
+
+    <!-- 02 FLIGHT CONTROL -->
+    <section class="panel" id="flight">
+      <div class="panel-head">
+        <div><span class="section-kicker">02 / COMMAND</span><h2>Flight Control</h2></div>
+        <span class="pill orange" id="armPill">DISARMED</span>
+      </div>
+      <div class="fc">
+        <div class="fc-main">
+          <button class="big go" id="btnTakeoff">⇡ TAKE OFF</button>
+          <button class="big" id="btnLand">⇣ LAND</button>
+          <button class="big stop" id="btnStop">■ E-STOP</button>
+        </div>
+        <div class="fc-label">FLIGHT MODE</div>
+        <div class="seg" id="modeSeg">
+          <button data-mode="MANUAL">Manual</button>
+          <button data-mode="AUTONOMOUS">Autonomous</button>
+          <button data-mode="PATROL">Patrol</button>
+          <button data-mode="RTH">Return home</button>
+          <button data-mode="HOLD">Hold</button>
+        </div>
+        <div class="fc-row">
+          <div>
+            <div class="fc-label">MANUAL STICKS <small>(any input takes over)</small></div>
+            <div class="pad">
+              <button data-stick="yaw:-1" title="Q">⟲<small>Q</small></button>
+              <button data-stick="fwd:1" title="W">▲<small>W</small></button>
+              <button data-stick="yaw:1" title="E">⟳<small>E</small></button>
+              <button data-stick="right:-1" title="A">◀<small>A</small></button>
+              <button data-hover title="Space">■<small>SPC</small></button>
+              <button data-stick="right:1" title="D">▶<small>D</small></button>
+              <button data-stick="up:-1" title="F">⇣<small>F</small></button>
+              <button data-stick="fwd:-1" title="S">▼<small>S</small></button>
+              <button data-stick="up:1" title="R">⇡<small>R</small></button>
+            </div>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" data-param="assist" checked> Obstacle assist <small>blocks manual moves into obstacles</small></label>
+            <label><input type="checkbox" data-param="ground_reject" checked> Ground rejection <small>ignore floor in depth</small></label>
+            <label><input type="checkbox" data-param="median_filter" checked> Median depth filter <small>report §5.4</small></label>
+          </div>
+        </div>
+        <div class="fc-label">AVOIDANCE TUNING <small>(report defaults: 1.0 m/s · 5 m · 1.5 s)</small></div>
+        <div class="sliders">
+          <label>Cruise speed <input type="range" data-param="forward_speed" min="0.2" max="8" step="0.1"><output></output><em>m/s</em></label>
+          <label>Look-ahead threshold <input type="range" data-param="look_ahead_threshold" min="1" max="20" step="0.5"><output></output><em>m</em></label>
+          <label>Altitude <input type="range" data-param="altitude" min="2" max="40" step="0.5"><output></output><em>m</em></label>
+          <label>Sidestep speed <input type="range" data-param="avoid_speed_sideways" min="0.2" max="4" step="0.1"><output></output><em>m/s</em></label>
+          <label>Avoid duration <input type="range" data-param="avoid_duration" min="0.3" max="5" step="0.1"><output></output><em>s</em></label>
+          <label>ROI height <input type="range" data-param="roi_height_ratio" min="0.2" max="1" step="0.05"><output></output><em>×</em></label>
+          <label>Manual speed <input type="range" data-param="manual_speed" min="0.2" max="10" step="0.1"><output></output><em>m/s</em></label>
+          <label>Canny low/high <input type="range" data-param="canny_lo" min="10" max="200" step="5"><output></output><em></em></label>
+        </div>
+        <div class="fc-foot"><span>⌨ W/S fwd·back · A/D left·right · Q/E yaw · R/F up·down · Space hover · T take-off · L land · X e-stop</span><button id="btnReset" class="ghost">↻ Reset sim</button></div>
+      </div>
+    </section>
+
+    <!-- 03 MAP -->
+    <section class="panel" id="geospatial">
+      <div class="panel-head">
+        <div><span class="section-kicker">03 / LOCATION INTELLIGENCE</span><h2>Geospatial Operations</h2></div>
+        <div class="layer-toggles" id="layers">
+          <label><input type="checkbox" data-layer="crowd" checked> Crowd heat</label>
+          <label><input type="checkbox" data-layer="occ" checked> Depth obstacles</label>
+          <label><input type="checkbox" data-layer="route" checked> Route</label>
+          <label><input type="checkbox" data-layer="follow" checked> Follow</label>
+        </div>
+      </div>
+      <div class="map live-map"><canvas id="mapCanvas"></canvas>
+        <div class="map-coords" id="coords">—</div>
+        <div class="map-legend">▲ DRONE &nbsp; ◆ INCIDENT &nbsp; ⌂ HOME &nbsp; ■ DEPTH-MAPPED OBSTACLE &nbsp; ◍ CROWD</div>
+      </div>
+      <div class="map-note map-tools">
+        <span>CLICK = fly to point (GOTO) · SHIFT+CLICK = add patrol waypoint · DRAG = pan · WHEEL = zoom</span>
+        <span class="map-btns"><button id="routeApply" class="ghost" disabled>Use new route (0)</button><button id="routeClear" class="ghost">Clear draft</button><button id="mapClear" class="ghost">Clear map</button></span>
+      </div>
+    </section>
+
+    <!-- 04 INCIDENTS -->
+    <section class="panel incidents-panel" id="incidents">
+      <div class="panel-head">
+        <div><span class="section-kicker">04 / OPERATOR REVIEW</span><h2>Live Incident Queue</h2></div>
+        <span class="pill orange" id="incidentBadge">0 EVENTS</span>
+      </div>
+      <div class="sev-filter" id="sevFilter">
+        <label><input type="checkbox" value="INFO"> Info</label>
+        <label><input type="checkbox" value="LOW" checked> Low</label>
+        <label><input type="checkbox" value="MEDIUM" checked> Medium</label>
+        <label><input type="checkbox" value="HIGH" checked> High</label>
+        <label><input type="checkbox" value="CRITICAL" checked> Critical</label>
+      </div>
+      <div class="incident-list live-incidents" id="incidentList"></div>
+      <div class="panel-foot foot-actions"><span>Human verification required. Review status is local to this browser.</span><button id="reportBtn" class="ghost">↓ Export incident report</button></div>
+    </section>
+
+    <!-- 05 TIMELINE -->
+    <section class="panel trend-panel">
+      <div class="panel-head">
+        <div><span class="section-kicker">05 / TEMPORAL ANALYSIS</span><h2>Clearance &amp; Crowd Timeline</h2></div>
+        <span class="pill">LAST 2 MIN</span>
+      </div>
+      <div class="chart"><canvas id="chartCanvas"></canvas></div>
+      <div class="chart-legend"><span class="lg c1">— forward clearance (m)</span><span class="lg c2">┄ look-ahead threshold</span><span class="lg c3">▮ persons in view</span></div>
+      <div class="trend-summary">
+        <div><small>MIN CLEARANCE</small><strong id="sMin">—</strong></div>
+        <div><small>PEAK PERSONS</small><strong id="sPeak">—</strong></div>
+        <div><small>LOOP / LATENCY</small><strong id="sLoop">—</strong></div>
+      </div>
+    </section>
+
+    <!-- 06 LOG -->
+    <section class="panel" id="log">
+      <div class="panel-head">
+        <div><span class="section-kicker">06 / TELEMETRY</span><h2>Detections &amp; Flight Log</h2></div>
+        <span class="pill cyan" id="detPill">DETECTOR</span>
+      </div>
+      <div class="split">
+        <div class="det-table"><table><thead><tr><th>CLASS</th><th>CONF</th><th>DIST</th><th>SRC</th></tr></thead><tbody id="detBody"></tbody></table></div>
+        <div class="console" id="console"></div>
+      </div>
+    </section>
+  </div>
+  <footer>GARUDA OPS <span>•</span> DYSL-AT / DRDO VISION-BASED OBSTACLE AVOIDANCE <span>•</span> AIRSIM BRIDGE <span>•</span> NO FACIAL RECOGNITION</footer>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="live.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Required
+numpy
+opencv-python
+# Required to fly AirSim (not needed for --sim mock)
+msgpack-rpc-python
+airsim
+# Optional: real YOLO object detection on the AirSim camera (--detector yolo)
+# ultralytics
