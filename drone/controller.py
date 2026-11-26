@@ -113,6 +113,7 @@ class DroneController(threading.Thread):
         self.collided_flag = None
         self.error = None
         self.rec = None
+        self._still = None
         self.log_line('INFO', f'Backend: {backend.name} · Detector: {detector.label}')
 
     # ----------------------------------------------------------- public API
@@ -146,7 +147,7 @@ class DroneController(threading.Thread):
                 t=round(time.time() - self.t_start, 2),
                 backend=self.b.name, detector=self.det.label, error=self.error,
                 mode=self.mode, decision=self.decision, assist=self.assist_note,
-                armed=not st['landed'], collided=self.collided_flag,
+                armed=self.mode != 'IDLE', collided=self.collided_flag,
                 pos=dict(x=round(float(st['x']), 2), y=round(float(st['y']), 2), alt=round(-float(st['z']), 2)),
                 vel=dict(vx=round(float(st['vx']), 2), vy=round(float(st['vy']), 2), vz=round(float(st['vz']), 2), speed=round(float(speed), 2)),
                 heading=round(math.degrees(st['yaw']) % 360, 1),
@@ -212,9 +213,9 @@ class DroneController(threading.Thread):
     # ----------------------------------------------------------- commands
     def _apply(self, c):
         a = c.get('action')
-        airborne = not self.st['landed']
+        airborne = self.mode != 'IDLE'
         if a == 'takeoff':
-            if self.mode in ('IDLE', 'LANDING') or not airborne:
+            if self.mode in ('IDLE', 'LANDING'):
                 self.b.arm_takeoff()
                 self.collided_flag = None
                 self.home = (round(self.st['x'], 2), round(self.st['y'], 2))
@@ -234,7 +235,7 @@ class DroneController(threading.Thread):
             m = str(c.get('mode', '')).upper()
             if m not in MODES or m in ('IDLE', 'TAKEOFF', 'LANDING'):
                 raise ValueError(f'bad mode {m}')
-            if not airborne and self.mode != 'TAKEOFF':
+            if not airborne:
                 self.log_line('WARN', f'{m} ignored — drone is on the ground (take off first)')
                 return
             if m == 'PATROL':
@@ -317,11 +318,12 @@ class DroneController(threading.Thread):
         if self.rec:
             self.rec.close(self.events)
         try:                                   # original script: finally -> landAsync, disarm
-            if not self.b.state()['landed']:
+            if self.mode != 'IDLE':
                 self.b.land()
                 t_end = time.time() + 15
                 while time.time() < t_end and not self.b.state()['landed']:
                     time.sleep(0.2)
+                self.b.disarm()
         except Exception as e:
             print('[shutdown] landing failed:', e)
         self.b.close()
@@ -482,9 +484,8 @@ class DroneController(threading.Thread):
         self.assist_note = ''
         m = self.mode
         if m == 'IDLE':
-            self.decision = 'ON GROUND — ready for take-off' if st['landed'] else 'IDLE'
-            if not st['landed']:
-                self.set_mode('HOLD', 'airborne')
+            # on the ground: never re-launch on our own — only TAKE OFF does that
+            self.decision = 'ON GROUND — ready for take-off'
             return
         if m == 'TAKEOFF':
             self.decision = f'TAKING OFF → {cfg["altitude"]:.1f} m'
@@ -495,9 +496,16 @@ class DroneController(threading.Thread):
             return
         if m == 'LANDING':
             self.decision = 'LANDING'
-            if st['landed'] or (alt < 0.15 and now - self.t_mode > 2):
+            # touchdown = AirSim says landed, or no vertical motion for 1.5 s
+            if abs(st['vz']) < 0.08 and now - self.t_mode > 2:
+                self._still = self._still or now
+            else:
+                self._still = None
+            if st['landed'] or (self._still and now - self._still > 1.5):
+                self.b.disarm()          # as in the original script: land, then disarm
+                self._still = None
                 self.set_mode('IDLE', 'touchdown')
-                self.event('Landed', 'INFO', 'Drone on the ground', every=1)
+                self.event('Landed', 'INFO', 'Drone on the ground — motors disarmed', every=1)
             return
         if m == 'HOLD':
             self.decision = 'HOLDING POSITION' + (' — COLLISION' if self.collided_flag else '')

@@ -20,6 +20,7 @@ class Backend:
     def connect(self): ...
     def arm_takeoff(self): ...
     def land(self): ...
+    def disarm(self): ...
     def hover(self): ...
     def move(self, vx, vy, z, yaw_rate_deg, duration=0.5): ...
     def state(self): ...
@@ -72,6 +73,9 @@ class AirSimBackend(Backend):
 
     def land(self):
         self.client.landAsync(vehicle_name=self.vehicle)
+
+    def disarm(self):
+        self.client.armDisarm(False, self.vehicle)
 
     def hover(self):
         self.client.hoverAsync(vehicle_name=self.vehicle)
@@ -174,6 +178,10 @@ class MockBackend(Backend):
 
     def land(self):
         self.drone.landing = True
+
+    def disarm(self):
+        self.drone.armed = False
+        self.drone.cmd.update(z=0.0)
 
     def hover(self):
         self.drone.cmd.update(vx=0.0, vy=0.0, yaw_rate=0.0, until=time.time() + 0.5)
