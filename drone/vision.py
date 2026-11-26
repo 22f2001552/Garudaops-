@@ -156,8 +156,13 @@ def detection_view(scene, dets, obst, obs, cfg, decision, roi_start):
 def _arrow(img, decision, c):
     label = (decision or '').upper()
     x, y = c
-    col = RED if 'BLOCKED' in label else (AMBER if 'ADJUST' in label or 'BIAS' in label else GREEN)
-    if 'ROTATE' in label:
+    col = RED if ('BLOCKED' in label or 'BACKING' in label) else (AMBER if 'ADJUST' in label or 'BIAS' in label else GREEN)
+    if 'BACKING' in label:
+        cv2.arrowedLine(img, (x, y - 30), (x, y + 30), col, 4, cv2.LINE_AA, tipLength=0.35)
+    elif 'ROTATE' in label and 'LEFT' in label:
+        cv2.ellipse(img, (x, y), (30, 30), 0, -70, 220, col, 3, cv2.LINE_AA)
+        cv2.arrowedLine(img, (x - 22, y - 22), (x - 30, y - 4), col, 3, cv2.LINE_AA, tipLength=0.9)
+    elif 'ROTATE' in label:
         cv2.ellipse(img, (x, y), (30, 30), 0, -40, 250, col, 3, cv2.LINE_AA)
         cv2.arrowedLine(img, (x + 22, y - 22), (x + 30, y - 4), col, 3, cv2.LINE_AA, tipLength=0.9)
     elif 'LEFT' in label:
