@@ -1,8 +1,11 @@
-# Required
+# Python 3.9 recommended (conda create -n garuda python=3.9)
+# Install in THIS order (see README):
+#   pip install numpy opencv-python
+#   pip install tornado==4.5.3 msgpack-rpc-python
+#   pip install airsim --no-build-isolation
 numpy
 opencv-python
-# Required to fly AirSim (not needed for --sim mock)
+tornado==4.5.3
 msgpack-rpc-python
-airsim
-# Optional: real YOLO object detection on the AirSim camera (--detector yolo)
-# ultralytics
+# airsim   <- install separately with --no-build-isolation
+# ultralytics   <- optional, for --detector yolo
