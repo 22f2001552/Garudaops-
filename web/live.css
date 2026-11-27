@@ -149,3 +149,16 @@ button:disabled{opacity:.4;cursor:default;filter:none}
 .modal-btns{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
 .modal-foot{display:block;margin-top:9px;color:#7f97ab;font-size:10px}
 @media(max-width:900px){.er-body{grid-template-columns:1fr}.er-controls{border-right:0}}
+
+/* police stations */
+.er-right{display:grid;grid-template-rows:auto 1fr}
+.er-stations{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px;border-bottom:1px solid #223448}
+.ps-card{background:#0f1d30;border:1px solid #2a4468;border-radius:9px;padding:9px 11px;font-size:10.5px;color:#b9cce0}
+.ps-card b{display:block;color:#a9c8ff;font-size:12px;margin-bottom:3px}
+.ps-card .in{color:#59d8b5;font-weight:700}.ps-card .out{color:#f2b06d;font-weight:700}
+.station-pick{display:grid;gap:6px;margin:0 0 12px}
+.station-pick label{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:#0f1d30;border:1px solid #2a4468;border-radius:8px;padding:8px 11px;cursor:pointer;font-size:11.5px;color:#d4e2f0}
+.station-pick label.sel{border-color:#7fb2ff;background:#16294a}
+.station-pick small{color:#8fa6bd}.station-pick .in{color:#59d8b5;font-weight:700}.station-pick .out{color:#f2b06d;font-weight:700}
+.st-DELIVERED{color:#59d8b5;font-weight:700}.st-QUEUED{color:#f2b06d;font-weight:700}
+@media(max-width:900px){.er-stations{grid-template-columns:1fr}}

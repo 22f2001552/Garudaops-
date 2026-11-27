@@ -68,6 +68,16 @@ LIMITS = dict(alert_limit=(1, 200), forward_speed=(0.2, 8), avoid_speed_sideways
               manual_speed=(0.2, 10), hard_stop=(0.5, 5), bias_duration=(0, 3))
 
 
+# Police stations (local metres from the take-off point, x = north, y = east).
+# Override / move them with Alt+click on the map; saved to data/police_stations.json.
+DEFAULT_STATIONS = {
+    'MOCK': [dict(id='PS-A', name='Police Station A (near)', x=60.0, y=5.0, range_m=80.0),
+             dict(id='PS-B', name='Police Station B (far)', x=-80.0, y=-70.0, range_m=80.0)],
+    'AIRSIM': [dict(id='PS-A', name='Police Station A (near)', x=-35.0, y=0.0, range_m=80.0),
+               dict(id='PS-B', name='Police Station B (far)', x=180.0, y=0.0, range_m=80.0)],
+}
+
+
 def wrap(a):
     return (a + math.pi) % (2 * math.pi) - math.pi
 
@@ -129,6 +139,8 @@ class DroneController(threading.Thread):
         self._over_since = None
         self._last_decision = None        # (time, x, y) of the last operator decision
         self._alert_snap_pending = None
+        self.delivery = None              # active "fly to station to deliver" mission
+        self.stations = self._load_stations()
         self.log_line('INFO', f'Backend: {backend.name} · Detector: {detector.label}')
 
     # ----------------------------------------------------------- public API
@@ -190,6 +202,8 @@ class DroneController(threading.Thread):
                 recording=self.rec.info() if self.rec else None,
                 last_manifest=self.last_manifest,
                 alerts=[{k: v for k, v in al.items() if k != 'snapshot'} for al in self.alerts[-20:]],
+                stations=self._stations_view(),
+                delivery=self.delivery,
                 pending_alert=next(({k: v for k, v in al.items() if k != 'snapshot'}
                                     for al in self.alerts if al['status'] == 'PENDING'), None),
             )
@@ -224,6 +238,9 @@ class DroneController(threading.Thread):
     def set_mode(self, m, why=''):
         if m == self.mode:
             return
+        if self.delivery and m not in ('GOTO',):
+            self.log_line('NAV', f"Delivery flight for {self.delivery['alert']} interrupted ({m}); alert stays queued")
+            self.delivery = None
         self.log_line('MODE', f'{self.mode} → {m}' + (f' ({why})' if why else ''))
         self.mode = m
         self.t_mode = time.time()
@@ -299,7 +316,9 @@ class DroneController(threading.Thread):
             self.collided_flag = None
             self.set_mode('IDLE', 'simulation reset')
         elif a == 'alert_decision':
-            self._decide_alert(str(c.get('id')), str(c.get('decision')))
+            self._decide_alert(str(c.get('id')), str(c.get('decision')), c.get('station'))
+        elif a == 'station_move':
+            self._move_station(c.get('id'), float(c['x']), float(c['y']))
         elif a == 'alert_test':
             persons = self._near_persons(self.dets)
             self._raise_alert(self.st, max(persons, self.cfg['alert_limit']), 'TEST', test=True)
@@ -411,6 +430,7 @@ class DroneController(threading.Thread):
                        f'{persons} persons in view near {zone_of(st["x"], st["y"])} — operator review requested',
                        key='crowd', every=20)
         self._check_crowd_alert(st, persons, level, now)
+        self._check_deliveries(st)
         if self.mode in FLYING and _f(obs['min_dist_center'], 99) < cfg['hard_stop']:
             self.event('Low clearance', 'HIGH', f'Obstacle {obs["min_dist_center"]:.1f} m ahead', key='clear', every=6)
 
@@ -495,8 +515,12 @@ class DroneController(threading.Thread):
                   zone=zone_of(st['x'], st['y']),
                   x=round(float(st['x']), 1), y=round(float(st['y']), 1), alt=round(-float(st['z']), 1),
                   latitude=round(float(st['lat']), 7), longitude=round(float(st['lon']), 7),
-                  station='Nearest police station', decided=None, snapshot=None, snapshot_sha256=None,
+                  station=None, station_id=None, station_options=self._station_options(st['x'], st['y']),
+                  delivery=None, delivered=None, decided=None, snapshot=None, snapshot_sha256=None,
                   recording=self.rec.base if self.rec else None)
+        if al['station_options']:
+            al['station_id'] = al['station_options'][0]['id']          # nearest by default
+            al['station'] = al['station_options'][0]['name']
         self.alerts.append(al)
         self.alerts = self.alerts[-100:]
         self._alert_snap_pending = al['id']
@@ -518,7 +542,7 @@ class DroneController(threading.Thread):
         d.mkdir(parents=True, exist_ok=True)
         (d / f"{al['id']}_{time.strftime('%Y%m%d_%H%M%S')}.jpg").write_bytes(data)
 
-    def _decide_alert(self, alert_id, decision):
+    def _decide_alert(self, alert_id, decision, station_id=None):
         al = next((a for a in self.alerts if a['id'] == alert_id), None)
         if not al or al['status'] != 'PENDING':
             raise ValueError('no pending alert with that id')
@@ -528,15 +552,115 @@ class DroneController(threading.Thread):
         self._last_decision = (time.time(), self.st['x'], self.st['y'])
         tag = ' (TEST)' if al['test'] else ''
         if decision == 'send':
-            al['status'] = 'SENT'
+            ps = self._station(station_id or al['station_id'])
+            if not ps:
+                raise ValueError('unknown police station')
+            al['station_id'], al['station'] = ps['id'], ps['name']
+            d = math.hypot(ps['x'] - self.st['x'], ps['y'] - self.st['y'])
             self.event('Police alert sent' + tag, 'CRITICAL',
-                       f"{al['id']} → {al['station']}: {al['persons']} persons at {al['zone']}, "
+                       f"{al['id']} → {ps['name']} ({d:.0f} m away): {al['persons']} persons at {al['zone']}, "
                        f"GPS {al['latitude']:.6f}, {al['longitude']:.6f}", every=0)
+            if d <= ps['range_m']:
+                self._deliver(al, ps, 'direct radio link')
+            else:
+                al['status'] = 'QUEUED'
+                al['delivery'] = f"out of radio range ({d:.0f} m > {ps['range_m']:.0f} m) — flying toward station"
+                self.event('Alert queued — out of range' + tag, 'HIGH',
+                           f"{ps['name']} is {d:.0f} m away (radio range {ps['range_m']:.0f} m). "
+                           f"Drone flying toward it to deliver {al['id']}", every=0)
+                if self.mode != 'IDLE':
+                    self.delivery = dict(alert=al['id'], station=ps['id'], station_name=ps['name'],
+                                         return_to=[al['x'], al['y']])
+                    self.target = [ps['x'], ps['y']]
+                    self.set_mode('GOTO', f"delivering {al['id']} to {ps['name']}")
         else:
             al['status'] = 'DECLINED'
             self.event('Police alert declined' + tag, 'MEDIUM',
                        f"{al['id']} declined by operator ({al['persons']} persons at {al['zone']})", every=0)
         self._save_alert_log()
+
+    # ----------------------------------------------------------- police stations
+    def _load_stations(self):
+        key = 'AIRSIM' if self.b.name.startswith('AIRSIM') else 'MOCK'
+        f = self.root / 'data' / 'police_stations.json'
+        try:
+            saved = json.loads(f.read_text())
+            if saved.get(key):
+                return saved[key]
+        except Exception:
+            pass
+        return [dict(s) for s in DEFAULT_STATIONS[key]]
+
+    def _save_stations(self):
+        key = 'AIRSIM' if self.b.name.startswith('AIRSIM') else 'MOCK'
+        f = self.root / 'data' / 'police_stations.json'
+        try:
+            saved = json.loads(f.read_text())
+        except Exception:
+            saved = {}
+        saved[key] = self.stations
+        f.write_text(json.dumps(saved, indent=1))
+
+    def _station(self, sid):
+        return next((s for s in self.stations if s['id'] == sid), None)
+
+    def _move_station(self, sid, x, y):
+        ps = self._station(sid) if sid else min(self.stations, key=lambda s: math.hypot(s['x'] - x, s['y'] - y))
+        if not ps:
+            raise ValueError('unknown station')
+        ps['x'], ps['y'] = round(x, 1), round(y, 1)
+        self._save_stations()
+        self.log_line('NAV', f"{ps['name']} moved to ({x:.0f}, {y:.0f})")
+
+    def _gps_of(self, x, y):
+        st = self.st
+        lat = st['lat'] + (x - st['x']) / 111320.0
+        lon = st['lon'] + (y - st['y']) / (111320.0 * max(0.2, math.cos(math.radians(st['lat'] or 0))))
+        return round(lat, 7), round(lon, 7)
+
+    def _station_options(self, x, y):
+        out = []
+        for ps in self.stations:
+            d = math.hypot(ps['x'] - x, ps['y'] - y)
+            gap = max(0.0, d - ps['range_m'])
+            out.append(dict(id=ps['id'], name=ps['name'], dist_m=round(d, 1), range_m=ps['range_m'],
+                            in_range=d <= ps['range_m'],
+                            fly_m=round(gap, 1), eta_sec=round(gap / max(0.3, self.cfg['forward_speed']), 0)))
+        return sorted(out, key=lambda o: o['dist_m'])
+
+    def _stations_view(self):
+        out = []
+        for ps in self.stations:
+            lat, lon = self._gps_of(ps['x'], ps['y'])
+            d = math.hypot(ps['x'] - self.st['x'], ps['y'] - self.st['y'])
+            out.append(dict(ps, latitude=lat, longitude=lon, dist_m=round(d, 1), in_range=d <= ps['range_m']))
+        return out
+
+    def _deliver(self, al, ps, method):
+        dt = _dt.datetime.now().astimezone()
+        al['status'] = 'DELIVERED'
+        al['delivered'] = vision.fmt_ts(dt)
+        al['delivery'] = method
+        al['delivery_sec'] = round(dt.timestamp() - al['created_epoch'], 1)
+        tag = ' (TEST)' if al['test'] else ''
+        self.event('Alert delivered to police' + tag, 'CRITICAL',
+                   f"{al['id']} received by {ps['name']} via {method} at {al['delivered']} "
+                   f"({al['delivery_sec']} s after detection)", every=0)
+        self._save_alert_log()
+
+    def _check_deliveries(self, st):
+        for al in self.alerts:
+            if al['status'] != 'QUEUED':
+                continue
+            ps = self._station(al['station_id'])
+            if ps and math.hypot(ps['x'] - st['x'], ps['y'] - st['y']) <= ps['range_m']:
+                self._deliver(al, ps, 'drone flew into radio range')
+                if self.delivery and self.delivery['alert'] == al['id']:
+                    back = self.delivery['return_to']
+                    self.delivery = None
+                    if self.mode not in ('IDLE', 'LANDING', 'MANUAL'):
+                        self.target = list(back)
+                        self.set_mode('GOTO', 'alert delivered — returning to crowd area')
 
     def _save_alert_log(self):
         d = self.root / 'data' / 'alerts'
@@ -700,6 +824,8 @@ class DroneController(threading.Thread):
             self.event(*evt, key='avoid', every=2.5)
         self._send_body(st, vx_b, vy_b, yaw_rate)
         tgt = f' → WP ({self.target[0]:.0f},{self.target[1]:.0f})' if self.target else ''
+        if self.delivery:
+            tgt = f" → DELIVERING {self.delivery['alert']} TO {self.delivery['station_name'].upper()}"
         self.decision = label + tgt
 
     def _observation(self, st, obs, persons, level, dets):

@@ -110,6 +110,8 @@ If the number of people near the drone (within `crowd_range`, 45 m) stays above 
 * The alert is **never sent automatically**. The operator decides, and the reaction time is logged.
 * In the **Emergency Response** panel you can turn prompts on or off, set the crowd limit, and see every alert and its status.
 * Snapshots and `alerts_log.json` are saved in `data/alerts/`.
+* **Police stations:** there are two, *A (near)* and *B (far)*, each with a **radio range** (default 80 m), shown as dashed circles on the map. The popup lists both with their distance and picks the nearest. If the chosen station is **in range**, the alert is delivered instantly. If it's **out of range**, the drone **flies toward the station** (still avoiding obstacles), delivers as soon as it's in range, then returns to the crowd area. Each delivery is time-stamped.
+* **Alt + click** on the map moves the nearest station to that spot. Positions are saved to `data/police_stations.json`, so you can place them on streets in your AirSim world.
 * **Test alert** raises a clearly marked TEST alert. Use it in AirSim worlds that have no people.
 
 ## Tamper-evident recordings

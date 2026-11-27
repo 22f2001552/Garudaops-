@@ -165,7 +165,10 @@
           <div class="er-now"><small>NEAR DRONE NOW</small><strong id="erNow">—</strong><span id="erNowFoot">limit —</span></div>
           <button class="ghost" id="erTest" title="Raises a clearly-marked TEST alert with the current position">⚑ Test alert</button>
         </div>
-        <div class="er-log"><table><thead><tr><th>ALERT</th><th>TIME</th><th>PERSONS</th><th>AREA</th><th>STATUS</th></tr></thead><tbody id="erBody"></tbody></table></div>
+        <div class="er-right">
+          <div class="er-stations" id="erStations"></div>
+          <div class="er-log"><table><thead><tr><th>ALERT</th><th>TIME</th><th>PERSONS</th><th>STATION</th><th>STATUS</th></tr></thead><tbody id="erBody"></tbody></table></div>
+        </div>
       </div>
     </section>
 
@@ -182,10 +185,10 @@
       </div>
       <div class="map live-map"><canvas id="mapCanvas"></canvas>
         <div class="map-coords" id="coords">—</div>
-        <div class="map-legend">▲ DRONE &nbsp; ◆ INCIDENT &nbsp; ⌂ HOME &nbsp; ■ DEPTH-MAPPED OBSTACLE &nbsp; ◍ CROWD</div>
+        <div class="map-legend">▲ DRONE &nbsp; ◆ INCIDENT &nbsp; ⌂ HOME &nbsp; <span style="color:#7fb2ff">P POLICE STATION (dashed = radio range)</span> &nbsp; ■ OBSTACLE &nbsp; ◍ CROWD</div>
       </div>
       <div class="map-note map-tools">
-        <span>CLICK = fly to point (GOTO) · SHIFT+CLICK = add patrol waypoint · DRAG = pan · WHEEL = zoom</span>
+        <span>CLICK = fly to point · SHIFT+CLICK = add patrol waypoint · ALT+CLICK = move nearest police station · DRAG = pan · WHEEL = zoom</span>
         <span class="map-btns"><button id="routeApply" class="ghost" disabled>Use new route (0)</button><button id="routeClear" class="ghost">Clear draft</button><button id="mapClear" class="ghost">Clear map</button></span>
       </div>
     </section>
@@ -250,6 +253,7 @@
       <div><small>GPS</small><b id="alertGps">—</b></div>
     </div>
     <p class="modal-q">Send alert to the nearest police station?</p>
+    <div class="station-pick" id="stationPick"></div>
     <div class="modal-btns">
       <button class="big stop" id="alertYes">✔ YES, SEND ALERT</button>
       <button class="big" id="alertNo">✕ NO</button>

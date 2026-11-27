@@ -129,8 +129,13 @@ function renderAlerts(t) {
   $('erPill').className = 'pill' + (pa ? ' alarm' : '');
   $('erBody').innerHTML = t.alerts.length ? t.alerts.slice().reverse().map(a =>
     `<tr><td>${safe(a.id)}${a.test ? ' <small>(test)</small>' : ''}</td><td>${safe(a.created.slice(11, 23))}</td><td>${a.persons} / ${a.limit}</td>
-     <td>${safe(a.zone)}</td><td class="st-${safe(a.status)}">${safe(a.status)}${a.decided ? ' · ' + a.response_sec + ' s' : ''}</td></tr>`).join('')
+     <td>${safe(a.status === 'DECLINED' ? '—' : (a.station || '—'))}</td>
+     <td class="st-${safe(a.status)}" title="${safe(a.delivery || '')}">${safe(a.status)}${a.delivery_sec != null ? ' · ' + a.delivery_sec + ' s' : (a.decided ? ' · ' + a.response_sec + ' s' : '')}</td></tr>`).join('')
     : '<tr><td colspan="5" style="color:#6c8296;padding:18px 12px">No alerts yet. A prompt appears when the crowd near the drone exceeds the limit for 3 s.</td></tr>';
+  $('erStations').innerHTML = (t.stations || []).map(p => `<div class="ps-card"><b>🛡 ${safe(p.name)}</b>
+    ${p.dist_m.toFixed(0)} m from drone · range ${p.range_m.toFixed(0)} m · <span class="${p.in_range ? 'in' : 'out'}">${p.in_range ? 'IN RADIO RANGE' : 'OUT OF RANGE'}</span><br>
+    <small>GPS ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}</small></div>`).join('');
+  if (t.delivery) $('erPill').textContent = '✈ DELIVERING ' + t.delivery.alert;
   const m = $('alertModal');
   if (!pa) { m.hidden = true; shownAlert = null; return; }
   if (shownAlert !== pa.id) {
@@ -142,13 +147,30 @@ function renderAlerts(t) {
     $('alertZone').textContent = `${pa.zone} · alt ${pa.alt} m`;
     $('alertGps').textContent = `${pa.latitude.toFixed(6)}, ${pa.longitude.toFixed(6)}`;
     $('alertSnap').removeAttribute('src');
+    pickedStation = (pa.station_options[0] || {}).id;
+    $('stationPick').innerHTML = pa.station_options.map((o, i) => `<label data-id="${safe(o.id)}" class="${i ? '' : 'sel'}">
+      <input type="radio" name="ps" value="${safe(o.id)}" ${i ? '' : 'checked'}>
+      <span><b>${safe(o.name)}</b>${i ? '' : ' <small>(nearest)</small>'}<br><small>${o.dist_m.toFixed(0)} m away · radio range ${o.range_m.toFixed(0)} m</small></span>
+      <span class="${o.in_range ? 'in' : 'out'}">${o.in_range ? 'IN RANGE · instant' : `OUT OF RANGE · fly ${o.fly_m.toFixed(0)} m+ (≥${o.eta_sec} s)`}</span></label>`).join('');
+    updateYes(pa);
   }
   if (!$('alertSnap').getAttribute('src') && pa.snapshot_sha256) $('alertSnap').src = `/api/alert/${pa.id}.jpg?h=${pa.snapshot_sha256.slice(0, 8)}`;
 }
+let pickedStation = null;
+function updateYes(pa) {
+  const o = (pa.station_options || []).find(x => x.id === pickedStation);
+  $('alertYes').textContent = !o ? '✔ YES, SEND ALERT' : o.in_range ? '✔ YES, SEND ALERT' : '✔ YES, FLY & DELIVER';
+}
+$('stationPick').onchange = e => {
+  pickedStation = e.target.value;
+  document.querySelectorAll('#stationPick label').forEach(l => l.classList.toggle('sel', l.dataset.id === pickedStation));
+  if (T && T.pending_alert) updateYes(T.pending_alert);
+};
 function decide(decision) {
   if (!shownAlert) return;
   $('alertYes').disabled = $('alertNo').disabled = true; $('alertWait').textContent = 'Sending…';
-  cmd({action: 'alert_decision', id: shownAlert, decision}, true).then(() => toast(decision === 'send' ? '🚨 Alert sent to police station' : 'Alert declined'));
+  cmd({action: 'alert_decision', id: shownAlert, decision, station: pickedStation}, true)
+    .then(() => toast(decision === 'send' ? '🚨 Alert sent to ' + (($('stationPick').querySelector('label.sel b') || {}).textContent || 'police') : 'Alert declined'));
 }
 $('alertYes').onclick = () => decide('send');
 $('alertNo').onclick = () => decide('decline');
@@ -305,6 +327,19 @@ function drawMap() {
     c.strokeStyle = '#f0c181'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(dx, dy); c.lineTo(tx, ty); c.stroke(); c.setLineDash([]);
     c.beginPath(); c.arc(tx, ty, 10, 0, 7); c.stroke(); c.beginPath(); c.moveTo(tx - 15, ty); c.lineTo(tx + 15, ty); c.moveTo(tx, ty - 15); c.lineTo(tx, ty + 15); c.stroke();
   }
+  // police stations + radio range
+  for (const p of (T.stations || [])) {
+    const [px, py] = w2s(p.x, p.y), rr = p.range_m * mv.scale, deliv = T.delivery && T.delivery.station === p.id;
+    c.strokeStyle = deliv ? '#ff8f8f' : '#7fb2ff88'; c.setLineDash([6, 6]); c.lineWidth = deliv ? 2 : 1.3;
+    c.beginPath(); c.arc(px, py, rr, 0, 7); c.stroke(); c.setLineDash([]);
+    c.fillStyle = '#1d4fa8'; c.strokeStyle = '#cfe0ff'; c.lineWidth = 2;
+    c.beginPath(); c.arc(px, py, 12, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = '#fff'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center'; c.fillText('P', px, py + 4);
+    c.font = '10px sans-serif'; c.fillStyle = '#cfe0ff'; c.fillText(p.name, px, py + 27);
+    c.fillStyle = p.in_range ? '#59d8b5' : '#f2b06d'; c.fillText(`${p.dist_m.toFixed(0)} m ${p.in_range ? '· in range' : '· out of range'}`, px, py + 40);
+    c.textAlign = 'left';
+    if (deliv) { const [dx, dy] = w2s(T.pos.x, T.pos.y); c.strokeStyle = '#ff8f8f'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(dx, dy); c.lineTo(px, py); c.stroke(); c.setLineDash([]); }
+  }
   // drone + camera FOV
   const [sx, sy] = w2s(T.pos.x, T.pos.y), hd = T.heading * Math.PI / 180;
   c.save(); c.translate(sx, sy); c.rotate(hd);
@@ -330,6 +365,7 @@ mapC.addEventListener('pointerup', e => {
   const [x, y] = s2w(e.offsetX, e.offsetY);
   // incident pin?
   for (const ev of events) { const [sx, sy] = w2s(ev.x, ev.y); if (ev.severity !== 'INFO' && Math.hypot(sx - e.offsetX, sy - e.offsetY) < 9) return focusIncident(ev.id); }
+  if (e.altKey) { cmd({action: 'station_move', x, y}, true).then(() => toast('Police station moved')); return; }
   if (e.shiftKey) { draftRoute.push([+x.toFixed(1), +y.toFixed(1)]); updRouteBtn(); drawMap(); return; }
   if (T && !T.armed) return toast('Take off first, then click the map to fly there', true);
   cmd({action: 'goto', x, y});
