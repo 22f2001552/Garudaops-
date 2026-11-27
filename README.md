@@ -103,6 +103,15 @@ Useful options:
 * **Coordinates:** detection positions on the map are estimated from the drone's pose, the pixel bearing and the depth, so they are approximate.
 * **Purpose:** this is a simulation and research prototype. It has no facial recognition and no real drone or dispatch integration.
 
+## Emergency response (crowd alert to police)
+
+If the number of people near the drone (within `crowd_range`, 45 m) stays above the **crowd limit** for 3 seconds, the dashboard shows a popup: *"Crowd was too much in <area>… Send alert to the nearest police station? YES / NO"*. The popup includes a crowd-heatmap snapshot, the time to the millisecond, and the GPS position.
+
+* The alert is **never sent automatically**. The operator decides, and the reaction time is logged.
+* In the **Emergency Response** panel you can turn prompts on or off, set the crowd limit, and see every alert and its status.
+* Snapshots and `alerts_log.json` are saved in `data/alerts/`.
+* **Test alert** raises a clearly marked TEST alert. Use it in AirSim worlds that have no people.
+
 ## Tamper-evident recordings
 
 Every view has an evidence strip under the picture showing the capture date and time to the millisecond, the recording clock (`REC 00:01:23.456`) and the frame number. These are burned into the saved video, so a cut shows up as a jump in the clock or frame number.

@@ -53,12 +53,17 @@ DEFAULT_CFG = dict(
     waypoint_radius=2.5,
     crowd_moderate=6, crowd_high=12, crowd_very_high=20,
     crowd_range=45.0,             # only persons within this distance count toward crowd level
+    # --- emergency response (police alert) ---
+    alert_enabled=True,           # auto-prompt the operator when the crowd limit is exceeded
+    alert_limit=12,               # persons near the drone that count as "too much"
+    alert_hold_sec=3.0,           # limit must be exceeded continuously this long
+    alert_cooldown_sec=60.0,      # after a decision, do not re-prompt for the same area this soon
     canny_lo=100, canny_hi=200,   # report values; lower them for low-contrast scenes
     crowd_heat_saturation=4.0,
     thermal_min_c=10.0, thermal_max_c=40.0, heat_alert_c=33.0,
 )
 NUMERIC = {k for k, v in DEFAULT_CFG.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
-LIMITS = dict(forward_speed=(0.2, 8), avoid_speed_sideways=(0.2, 4), avoid_duration=(0.3, 5),
+LIMITS = dict(alert_limit=(1, 200), forward_speed=(0.2, 8), avoid_speed_sideways=(0.2, 4), avoid_duration=(0.3, 5),
               look_ahead_threshold=(1, 20), roi_height_ratio=(0.2, 1.0), altitude=(1.5, 60),
               manual_speed=(0.2, 10), hard_stop=(0.5, 5), bias_duration=(0, 3))
 
@@ -119,6 +124,11 @@ class DroneController(threading.Thread):
         self._still = None
         self.tick_no = 0
         self.last_manifest = None
+        self.alerts = []                  # every police alert (pending / sent / declined)
+        self.alert_seq = 0
+        self._over_since = None
+        self._last_decision = None        # (time, x, y) of the last operator decision
+        self._alert_snap_pending = None
         self.log_line('INFO', f'Backend: {backend.name} · Detector: {detector.label}')
 
     # ----------------------------------------------------------- public API
@@ -179,6 +189,9 @@ class DroneController(threading.Thread):
                 cfg=self.cfg,
                 recording=self.rec.info() if self.rec else None,
                 last_manifest=self.last_manifest,
+                alerts=[{k: v for k, v in al.items() if k != 'snapshot'} for al in self.alerts[-20:]],
+                pending_alert=next(({k: v for k, v in al.items() if k != 'snapshot'}
+                                    for al in self.alerts if al['status'] == 'PENDING'), None),
             )
 
     def stop(self):
@@ -285,6 +298,11 @@ class DroneController(threading.Thread):
             self.trail.clear(); self.occ.clear(); self.crowd.clear()
             self.collided_flag = None
             self.set_mode('IDLE', 'simulation reset')
+        elif a == 'alert_decision':
+            self._decide_alert(str(c.get('id')), str(c.get('decision')))
+        elif a == 'alert_test':
+            persons = self._near_persons(self.dets)
+            self._raise_alert(self.st, max(persons, self.cfg['alert_limit']), 'TEST', test=True)
         elif a == 'clear_map':
             self.occ.clear(); self.crowd.clear(); self.trail.clear()
         elif a == 'record':
@@ -392,6 +410,7 @@ class DroneController(threading.Thread):
             self.event('Crowd congestion', 'HIGH' if level == 'HIGH' else 'CRITICAL',
                        f'{persons} persons in view near {zone_of(st["x"], st["y"])} — operator review requested',
                        key='crowd', every=20)
+        self._check_crowd_alert(st, persons, level, now)
         if self.mode in FLYING and _f(obs['min_dist_center'], 99) < cfg['hard_stop']:
             self.event('Low clearance', 'HIGH', f'Obstacle {obs["min_dist_center"]:.1f} m ahead', key='clear', every=6)
 
@@ -403,6 +422,8 @@ class DroneController(threading.Thread):
         need = {v for v, t in self.view_wanted.items() if now - t < 3.0}
         if self.rec:
             need.add('detection')
+        if self._alert_snap_pending:
+            need.add('crowd')
         if 'quad' in need:
             need |= {'detection', 'depth', 'crowd', 'thermal'}
         if 'detection' in need:
@@ -430,6 +451,9 @@ class DroneController(threading.Thread):
             rec_el, fno = None, self.tick_no
         for k in list(views):
             views[k] = vision.stamp(views[k], cap_dt, fno, src, rec_el)
+        if self._alert_snap_pending and 'crowd' in views:
+            self._save_alert_snapshot(self._alert_snap_pending, views['crowd'])
+            self._alert_snap_pending = None
         enc = {}
         for k, v in views.items():
             ok, buf = cv2.imencode('.jpg', v, [cv2.IMWRITE_JPEG_QUALITY, 80])
@@ -441,6 +465,88 @@ class DroneController(threading.Thread):
             self.jpeg.update(enc)
             self.frame_id += 1
             self.frame_cond.notify_all()
+
+    # ----------------------------------------------------------- emergency response
+    def _check_crowd_alert(self, st, persons, level, now):
+        cfg = self.cfg
+        if not cfg['alert_enabled'] or self.mode == 'IDLE' or persons < cfg['alert_limit']:
+            self._over_since = None
+            return
+        self._over_since = self._over_since or now
+        if now - self._over_since < cfg['alert_hold_sec']:
+            return
+        if any(a['status'] == 'PENDING' for a in self.alerts):
+            return
+        if self._last_decision:
+            t, x, y = self._last_decision
+            # same area, decided recently -> do not nag the operator
+            if now - t < cfg['alert_cooldown_sec'] and math.hypot(st['x'] - x, st['y'] - y) < 40:
+                return
+        self._raise_alert(st, persons, level)
+
+    def _raise_alert(self, st, persons, level, test=False):
+        if any(a['status'] == 'PENDING' for a in self.alerts):
+            return
+        self.alert_seq += 1
+        dt = _dt.datetime.now().astimezone()
+        al = dict(id=f'ALERT-{self.alert_seq:03d}', test=test, status='PENDING',
+                  created=vision.fmt_ts(dt), created_epoch=dt.timestamp(),
+                  persons=int(persons), limit=int(self.cfg['alert_limit']), crowd_level=level,
+                  zone=zone_of(st['x'], st['y']),
+                  x=round(float(st['x']), 1), y=round(float(st['y']), 1), alt=round(-float(st['z']), 1),
+                  latitude=round(float(st['lat']), 7), longitude=round(float(st['lon']), 7),
+                  station='Nearest police station', decided=None, snapshot=None, snapshot_sha256=None,
+                  recording=self.rec.base if self.rec else None)
+        self.alerts.append(al)
+        self.alerts = self.alerts[-100:]
+        self._alert_snap_pending = al['id']
+        self.event('Crowd limit exceeded' + (' (TEST)' if test else ''), 'CRITICAL',
+                   f"{al['persons']} persons near {al['zone']} (limit {al['limit']}). "
+                   f"{al['id']} awaiting operator decision", every=0)
+
+    def _save_alert_snapshot(self, alert_id, img):
+        al = next((a for a in self.alerts if a['id'] == alert_id), None)
+        if not al:
+            return
+        ok, buf = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 88])
+        if not ok:
+            return
+        data = buf.tobytes()
+        al['snapshot'] = data
+        al['snapshot_sha256'] = hashlib.sha256(data).hexdigest()
+        d = self.root / 'data' / 'alerts'
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{al['id']}_{time.strftime('%Y%m%d_%H%M%S')}.jpg").write_bytes(data)
+
+    def _decide_alert(self, alert_id, decision):
+        al = next((a for a in self.alerts if a['id'] == alert_id), None)
+        if not al or al['status'] != 'PENDING':
+            raise ValueError('no pending alert with that id')
+        dt = _dt.datetime.now().astimezone()
+        al['decided'] = vision.fmt_ts(dt)
+        al['response_sec'] = round(dt.timestamp() - al['created_epoch'], 1)
+        self._last_decision = (time.time(), self.st['x'], self.st['y'])
+        tag = ' (TEST)' if al['test'] else ''
+        if decision == 'send':
+            al['status'] = 'SENT'
+            self.event('Police alert sent' + tag, 'CRITICAL',
+                       f"{al['id']} → {al['station']}: {al['persons']} persons at {al['zone']}, "
+                       f"GPS {al['latitude']:.6f}, {al['longitude']:.6f}", every=0)
+        else:
+            al['status'] = 'DECLINED'
+            self.event('Police alert declined' + tag, 'MEDIUM',
+                       f"{al['id']} declined by operator ({al['persons']} persons at {al['zone']})", every=0)
+        self._save_alert_log()
+
+    def _save_alert_log(self):
+        d = self.root / 'data' / 'alerts'
+        d.mkdir(parents=True, exist_ok=True)
+        log = [{k: v for k, v in a.items() if k != 'snapshot'} for a in self.alerts]
+        (d / 'alerts_log.json').write_text(json.dumps(log, indent=1))
+
+    def alert_snapshot(self, alert_id):
+        al = next((a for a in self.alerts if a['id'] == alert_id), None)
+        return al and al.get('snapshot')
 
     def _near_persons(self, dets):
         r = self.cfg['crowd_range']

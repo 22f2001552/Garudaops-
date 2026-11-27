@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+# recorded flights (large); keep the folders
+media/*
+!media/.gitkeep
+data/session_*.json
+# YOLO weights downloaded on first run
+*.pt
+.DS_Store
+Thumbs.db
+data/alerts/

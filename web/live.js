@@ -110,7 +110,49 @@ function render() {
   }
   $('sLoop').textContent = `${t.loop_ms} ms`;
   drawMap(); drawChart();
+  renderAlerts(t);
 }
+
+// ------------------------------------------------------------------ emergency response
+let shownAlert = null;
+function beep() {
+  try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain();
+    o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.05; o.connect(g); g.connect(a.destination);
+    o.start(); setTimeout(() => { o.frequency.value = 660; }, 180); setTimeout(() => { o.stop(); a.close(); }, 420); } catch (e) {}
+}
+function renderAlerts(t) {
+  const near = t.people_near, lim = t.cfg.alert_limit;
+  $('erNow').textContent = near; $('erNowFoot').textContent = `limit ${lim} · ${t.cfg.alert_enabled ? 'prompts ON' : 'prompts OFF'}`;
+  $('erNow').parentElement.classList.toggle('over', near >= lim);
+  const pa = t.pending_alert;
+  $('erPill').textContent = pa ? '⚠ DECISION NEEDED' : (t.cfg.alert_enabled ? 'MONITORING' : 'PROMPTS OFF');
+  $('erPill').className = 'pill' + (pa ? ' alarm' : '');
+  $('erBody').innerHTML = t.alerts.length ? t.alerts.slice().reverse().map(a =>
+    `<tr><td>${safe(a.id)}${a.test ? ' <small>(test)</small>' : ''}</td><td>${safe(a.created.slice(11, 23))}</td><td>${a.persons} / ${a.limit}</td>
+     <td>${safe(a.zone)}</td><td class="st-${safe(a.status)}">${safe(a.status)}${a.decided ? ' · ' + a.response_sec + ' s' : ''}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="color:#6c8296;padding:18px 12px">No alerts yet. A prompt appears when the crowd near the drone exceeds the limit for 3 s.</td></tr>';
+  const m = $('alertModal');
+  if (!pa) { m.hidden = true; shownAlert = null; return; }
+  if (shownAlert !== pa.id) {
+    shownAlert = pa.id; m.hidden = false; beep();
+    $('alertYes').disabled = $('alertNo').disabled = false; $('alertWait').textContent = 'Waiting for operator decision…';
+    $('alertTest').hidden = !pa.test;
+    $('alertMsg').innerHTML = `Crowd was too much in <b>${safe(pa.zone)}</b>: <b>${pa.persons}</b> persons detected near the drone (limit ${pa.limit}).`;
+    $('alertId').textContent = pa.id; $('alertTime').textContent = pa.created;
+    $('alertZone').textContent = `${pa.zone} · alt ${pa.alt} m`;
+    $('alertGps').textContent = `${pa.latitude.toFixed(6)}, ${pa.longitude.toFixed(6)}`;
+    $('alertSnap').removeAttribute('src');
+  }
+  if (!$('alertSnap').getAttribute('src') && pa.snapshot_sha256) $('alertSnap').src = `/api/alert/${pa.id}.jpg?h=${pa.snapshot_sha256.slice(0, 8)}`;
+}
+function decide(decision) {
+  if (!shownAlert) return;
+  $('alertYes').disabled = $('alertNo').disabled = true; $('alertWait').textContent = 'Sending…';
+  cmd({action: 'alert_decision', id: shownAlert, decision}, true).then(() => toast(decision === 'send' ? '🚨 Alert sent to police station' : 'Alert declined'));
+}
+$('alertYes').onclick = () => decide('send');
+$('alertNo').onclick = () => decide('decline');
+$('erTest').onclick = () => { if (T && !T.armed) return toast('Take off first', true); cmd({action: 'alert_test'}, true); };
 
 function syncCfg(c) {
   document.querySelectorAll('[data-param]').forEach(el => {

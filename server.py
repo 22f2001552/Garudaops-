@@ -89,6 +89,16 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(CTRL.telemetry(since))
         if path.startswith('/stream/'):
             return self._mjpeg(path.removeprefix('/stream/'))
+        if path.startswith('/api/alert/') and path.endswith('.jpg'):
+            data = CTRL.alert_snapshot(path.removeprefix('/api/alert/').removesuffix('.jpg'))
+            if not data:
+                return self.send_error(404)
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/jpeg')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if path.startswith('/snapshot/'):
             view = path.removeprefix('/snapshot/').removesuffix('.jpg')
             return self._snapshot(view)

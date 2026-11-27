@@ -149,6 +149,26 @@
       </div>
     </section>
 
+    <!-- EMERGENCY RESPONSE -->
+    <section class="panel er-panel" id="emergency">
+      <div class="panel-head">
+        <div><span class="section-kicker">⚠ / EMERGENCY RESPONSE</span><h2>Crowd Alert to Police</h2></div>
+        <span class="pill" id="erPill">MONITORING</span>
+      </div>
+      <div class="er-body">
+        <div class="er-controls">
+          <label class="er-toggle"><input type="checkbox" data-param="alert_enabled" checked><span class="sw"></span>
+            <b>Crowd alert prompts</b><small>Ask the operator to alert police when the crowd limit is exceeded</small></label>
+          <div class="sliders er-slider">
+            <label>Crowd limit (persons near drone) <input type="range" data-param="alert_limit" min="2" max="60" step="1"><output></output><em>ppl</em></label>
+          </div>
+          <div class="er-now"><small>NEAR DRONE NOW</small><strong id="erNow">—</strong><span id="erNowFoot">limit —</span></div>
+          <button class="ghost" id="erTest" title="Raises a clearly-marked TEST alert with the current position">⚑ Test alert</button>
+        </div>
+        <div class="er-log"><table><thead><tr><th>ALERT</th><th>TIME</th><th>PERSONS</th><th>AREA</th><th>STATUS</th></tr></thead><tbody id="erBody"></tbody></table></div>
+      </div>
+    </section>
+
     <!-- 03 MAP -->
     <section class="panel" id="geospatial">
       <div class="panel-head">
@@ -217,6 +237,25 @@
   <footer>GARUDA OPS <span>•</span> DYSL-AT / DRDO VISION-BASED OBSTACLE AVOIDANCE <span>•</span> AIRSIM BRIDGE <span>•</span> NO FACIAL RECOGNITION</footer>
 </div>
 </div>
+</div>
+<div class="modal-back" id="alertModal" hidden>
+  <div class="modal" role="alertdialog" aria-labelledby="alertTitle">
+    <div class="modal-head"><span class="blink">⚠</span> <b id="alertTitle">CROWD LIMIT EXCEEDED</b><span class="test-tag" id="alertTest" hidden>TEST</span></div>
+    <img id="alertSnap" alt="Crowd-density snapshot at the time of the alert">
+    <p class="modal-msg" id="alertMsg">—</p>
+    <div class="modal-grid">
+      <div><small>ALERT</small><b id="alertId">—</b></div>
+      <div><small>DETECTED AT</small><b id="alertTime">—</b></div>
+      <div><small>AREA</small><b id="alertZone">—</b></div>
+      <div><small>GPS</small><b id="alertGps">—</b></div>
+    </div>
+    <p class="modal-q">Send alert to the nearest police station?</p>
+    <div class="modal-btns">
+      <button class="big stop" id="alertYes">✔ YES, SEND ALERT</button>
+      <button class="big" id="alertNo">✕ NO</button>
+    </div>
+    <small class="modal-foot" id="alertWait">Waiting for operator decision…</small>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 <script src="live.js"></script>
