@@ -2,6 +2,11 @@
   "SettingsVersion": 1.2,
   "SimMode": "Multirotor",
   "ClockSpeed": 1,
+  "OriginGeopoint": {
+    "Latitude": 17.4435,
+    "Longitude": 78.3772,
+    "Altitude": 540
+  },
   "Vehicles": {
     "Drone1": {
       "VehicleType": "SimpleFlight",
@@ -9,11 +14,25 @@
       "Cameras": {
         "0": {
           "CaptureSettings": [
-            { "ImageType": 0, "Width": 480, "Height": 270, "FOV_Degrees": 90 },
-            { "ImageType": 2, "Width": 480, "Height": 270, "FOV_Degrees": 90 },
-            { "ImageType": 7, "Width": 480, "Height": 270, "FOV_Degrees": 90 }
+            {
+              "ImageType": 0,
+              "Width": 480,
+              "Height": 270,
+              "FOV_Degrees": 90
+            },
+            {
+              "ImageType": 2,
+              "Width": 128,
+              "Height": 72,
+              "FOV_Degrees": 90
+            }
           ],
-          "X": 0.5, "Y": 0, "Z": 0, "Pitch": 0, "Roll": 0, "Yaw": 0
+          "X": 0.5,
+          "Y": 0,
+          "Z": 0,
+          "Pitch": 0,
+          "Roll": 0,
+          "Yaw": 0
         }
       }
     }

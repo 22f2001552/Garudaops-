@@ -163,6 +163,8 @@
             <label>Crowd limit (persons near drone) <input type="range" data-param="alert_limit" min="2" max="60" step="1"><output></output><em>ppl</em></label>
           </div>
           <div class="er-now"><small>NEAR DRONE NOW</small><strong id="erNow">—</strong><span id="erNowFoot">limit —</span></div>
+          <div class="er-gps"><small>📍 DRONE GPS (LIVE)</small><b id="erGps">—</b>
+            <span><a id="erMaps" href="#" target="_blank" rel="noopener">Open in Google Maps ↗</a> · <a href="#" id="erCopy">Copy</a></span></div>
           <button class="ghost" id="erTest" title="Raises a clearly-marked TEST alert with the current position">⚑ Test alert</button>
         </div>
         <div class="er-right">
@@ -250,7 +252,7 @@
       <div><small>ALERT</small><b id="alertId">—</b></div>
       <div><small>DETECTED AT</small><b id="alertTime">—</b></div>
       <div><small>AREA</small><b id="alertZone">—</b></div>
-      <div><small>GPS</small><b id="alertGps">—</b></div>
+      <div><small>GPS</small><b id="alertGps">—</b> <a id="alertMaps" href="#" target="_blank" rel="noopener" class="maplink">Open in Maps ↗</a></div>
     </div>
     <p class="modal-q">Send alert to the nearest police station?</p>
     <div class="station-pick" id="stationPick"></div>

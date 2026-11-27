@@ -1,0 +1,22 @@
+{
+ "MOCK": [
+  {
+   "id": "PS-A",
+   "name": "Police Station A (near)",
+   "x": 60.0,
+   "y": 5.0,
+   "range_m": 80.0,
+   "email": "",
+   "phone": "+917013613972"
+  },
+  {
+   "id": "PS-B",
+   "name": "Police Station B (far)",
+   "x": -80.0,
+   "y": -70.0,
+   "range_m": 80.0,
+   "email": "",
+   "phone": ""
+  }
+ ]
+}

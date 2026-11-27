@@ -342,11 +342,12 @@ def fmt_elapsed(sec):
     return f'{int(h):02d}:{int(m):02d}:{s:06.3f}'
 
 
-def stamp(img, dt, frame_no, source, rec_elapsed=None):
+def stamp(img, dt, frame_no, source, rec_elapsed=None, gps=None):
     """Append a CCTV-style evidence strip under the image (never covers the picture):
-    capture date/time with ms · recording clock · frame number · source."""
+    line 1: capture date/time with ms · recording clock · frame number · source
+    line 2: GPS latitude/longitude · altitude · heading  (where the frame was taken)."""
     H, W = img.shape[:2]
-    bar = np.zeros((34, W, 3), np.uint8)
+    bar = np.zeros((58 if gps else 34, W, 3), np.uint8)
     bar[:] = (14, 14, 14)
     cv2.line(bar, (0, 0), (W, 0), (70, 70, 70), 1)
     cv2.putText(bar, fmt_ts(dt), (10, 23), FONT, 0.58, WHITE, 1, cv2.LINE_AA)
@@ -361,4 +362,9 @@ def stamp(img, dt, frame_no, source, rec_elapsed=None):
     right = f'FRAME {frame_no:06d}  {source}'
     (tw, _), _ = cv2.getTextSize(right, FONT, 0.5, 1)
     cv2.putText(bar, right, (W - tw - 10, 23), FONT, 0.5, (190, 200, 210), 1, cv2.LINE_AA)
+    if gps:
+        lat, lon, alt, hdg = gps
+        line = (f"GPS {abs(lat):.6f}{'N' if lat >= 0 else 'S'}  {abs(lon):.6f}{'E' if lon >= 0 else 'W'}"
+                f"   ALT {alt:.1f} m   HDG {hdg:03.0f}")
+        cv2.putText(bar, line, (10, 48), FONT, 0.5, (120, 230, 250), 1, cv2.LINE_AA)
     return np.vstack([img, bar])

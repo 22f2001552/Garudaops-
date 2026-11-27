@@ -162,3 +162,23 @@ button:disabled{opacity:.4;cursor:default;filter:none}
 .station-pick small{color:#8fa6bd}.station-pick .in{color:#59d8b5;font-weight:700}.station-pick .out{color:#f2b06d;font-weight:700}
 .st-DELIVERED{color:#59d8b5;font-weight:700}.st-QUEUED{color:#f2b06d;font-weight:700}
 @media(max-width:900px){.er-stations{grid-template-columns:1fr}}
+
+.er-gps{display:grid;gap:3px;background:#0f1d30;border:1px solid #2a4468;border-radius:9px;padding:10px 12px}
+.er-gps small{font-size:9px;letter-spacing:1.2px;color:#7fb2ff}
+.er-gps b{font:600 15px ui-monospace,Consolas,monospace;color:#e7edf7}
+.er-gps span,.ps-card a,.maplink{font-size:10.5px}
+.er-gps a,.ps-card a,.maplink,.er-log a{color:#8fc1ff}
+.ps-card .contact{margin-top:4px;color:#d4e2f0}
+.ps-card button{margin-top:6px;padding:5px 9px;font-size:9.5px}
+.station-pick .contact{color:#9fc4ff}
+.mail-SENT{color:#59d8b5}.mail-FAIL{color:#ff8f8f}.mail-WAIT{color:#f3d48d}.mail-OUT{color:#b9cce0}
+.ps-form{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;margin-top:8px}
+.ps-form label{display:grid;gap:3px;font-size:9.5px;letter-spacing:.6px;color:#8fa6bd}
+.ps-form input{background:#08121e;border:1px solid #2a4468;border-radius:6px;color:#e7edf7;padding:7px 8px;font:12px ui-monospace,Consolas,monospace;width:100%;box-sizing:border-box}
+.ps-form input:focus{outline:none;border-color:#7fb2ff;box-shadow:0 0 0 2px #7fb2ff33}
+.ps-actions{grid-column:1/-1;display:flex;gap:10px;align-items:center}
+.ps-actions button{margin:0}
+.ps-msg{font-size:10px;color:#8fa6bd}.ps-msg.ok{color:#59d8b5}.ps-msg.err{color:#ff8f8f}
+.ps-card.no-contact{border-color:#7a5a2a}.ps-card.no-contact .ps-msg{color:#f2b06d}
+.station-pick label.disabled{opacity:.55;cursor:not-allowed}
+.er-log a{margin-left:4px;font-size:10px}

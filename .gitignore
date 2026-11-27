@@ -12,3 +12,6 @@ data/session_*.json
 .DS_Store
 Thumbs.db
 data/alerts/
+
+# local secrets (e-mail password)
+data/alert_config.json

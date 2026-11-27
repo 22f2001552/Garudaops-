@@ -114,6 +114,20 @@ If the number of people near the drone (within `crowd_range`, 45 m) stays above 
 * **Alt + click** on the map moves the nearest station to that spot. Positions are saved to `data/police_stations.json`, so you can place them on streets in your AirSim world.
 * **Test alert** raises a clearly marked TEST alert. Use it in AirSim worlds that have no people.
 
+## GPS location and e-mail alerts
+
+* **GPS on everything:** the dashboard shows the live drone GPS with an *Open in Google Maps* link. GPS, altitude and heading are also burned into every video frame, under the timestamp. Every alert carries the GPS and a Maps link.
+* **Hyderabad location:** `airsim_config/settings.json` sets AirSim's `OriginGeopoint` to Hyderabad (17.4435 N, 78.3772 E), so GPS readings show a real Indian location instead of AirSim's default in Seattle. Edit it to use your own city.
+* **Station contacts:** each station card has an **E-mail** box (e.g. `abc@gmail.com`) and a **Phone** box (e.g. `9876543210`). At least one is required, and a station with neither can't be chosen for an alert. Phone numbers are stored as `+91…`.
+* **Where the alert goes when you press YES:**
+  * **Phone:** WhatsApp opens with the full alert already typed (persons, time, GPS, Google Maps link). The operator presses Send. Free, and works with any number.
+  * **E-mail:** sent automatically if Gmail is configured (see below). Otherwise your mail app opens with the alert already written.
+  * If the station is out of radio range, the drone delivers the alert first. Then **WhatsApp ↗ / E-mail ↗** links appear in the alert table.
+* **E-mail delivery:** when an alert is *delivered* to a station, an e-mail is sent to that station's address. It includes the person count, the detected, approved and delivered times, the GPS, a Google Maps button and the snapshot.
+  1. Copy `data/alert_config.example.json` to `data/alert_config.json` and fill in your Gmail address and a **Gmail App Password** (Google Account → Security → 2-Step Verification → App passwords). This file is ignored by git, so the password is never pushed.
+  2. Test it: `python tools/test_email.py you@example.com`
+* Every alert e-mail is also saved as an `.eml` file in `data/alerts/outbox/`. That copy is kept even when e-mail isn't configured or sending fails, and you can open it with Outlook or Mail.
+
 ## Tamper-evident recordings
 
 Every view has an evidence strip under the picture showing the capture date and time to the millisecond, the recording clock (`REC 00:01:23.456`) and the frame number. These are burned into the saved video, so a cut shows up as a jump in the clock or frame number.

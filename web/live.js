@@ -122,6 +122,8 @@ function beep() {
 }
 function renderAlerts(t) {
   const near = t.people_near, lim = t.cfg.alert_limit;
+  $('erGps').textContent = `${t.gps.lat.toFixed(6)}° N, ${t.gps.lon.toFixed(6)}° E`;
+  $('erMaps').href = t.gps.maps_url;
   $('erNow').textContent = near; $('erNowFoot').textContent = `limit ${lim} · ${t.cfg.alert_enabled ? 'prompts ON' : 'prompts OFF'}`;
   $('erNow').parentElement.classList.toggle('over', near >= lim);
   const pa = t.pending_alert;
@@ -130,11 +132,9 @@ function renderAlerts(t) {
   $('erBody').innerHTML = t.alerts.length ? t.alerts.slice().reverse().map(a =>
     `<tr><td>${safe(a.id)}${a.test ? ' <small>(test)</small>' : ''}</td><td>${safe(a.created.slice(11, 23))}</td><td>${a.persons} / ${a.limit}</td>
      <td>${safe(a.status === 'DECLINED' ? '—' : (a.station || '—'))}</td>
-     <td class="st-${safe(a.status)}" title="${safe(a.delivery || '')}">${safe(a.status)}${a.delivery_sec != null ? ' · ' + a.delivery_sec + ' s' : (a.decided ? ' · ' + a.response_sec + ' s' : '')}</td></tr>`).join('')
+     <td class="st-${safe(a.status)}" title="${safe(a.delivery || '')}${(a.notify || []).map(n => ' | ' + n.channel + ' ' + n.to + ': ' + n.status).join('')}">${safe(a.status)}${a.delivery_sec != null ? ' · ' + a.delivery_sec + ' s' : (a.decided ? ' · ' + a.response_sec + ' s' : '')}${mailTag(a)}${contactLinks(a)}</td></tr>`).join('')
     : '<tr><td colspan="5" style="color:#6c8296;padding:18px 12px">No alerts yet. A prompt appears when the crowd near the drone exceeds the limit for 3 s.</td></tr>';
-  $('erStations').innerHTML = (t.stations || []).map(p => `<div class="ps-card"><b>🛡 ${safe(p.name)}</b>
-    ${p.dist_m.toFixed(0)} m from drone · range ${p.range_m.toFixed(0)} m · <span class="${p.in_range ? 'in' : 'out'}">${p.in_range ? 'IN RADIO RANGE' : 'OUT OF RANGE'}</span><br>
-    <small>GPS ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}</small></div>`).join('');
+  renderStations(t);
   if (t.delivery) $('erPill').textContent = '✈ DELIVERING ' + t.delivery.alert;
   const m = $('alertModal');
   if (!pa) { m.hidden = true; shownAlert = null; return; }
@@ -146,19 +146,113 @@ function renderAlerts(t) {
     $('alertId').textContent = pa.id; $('alertTime').textContent = pa.created;
     $('alertZone').textContent = `${pa.zone} · alt ${pa.alt} m`;
     $('alertGps').textContent = `${pa.latitude.toFixed(6)}, ${pa.longitude.toFixed(6)}`;
+    $('alertMaps').href = pa.maps_url;
     $('alertSnap').removeAttribute('src');
-    pickedStation = (pa.station_options[0] || {}).id;
-    $('stationPick').innerHTML = pa.station_options.map((o, i) => `<label data-id="${safe(o.id)}" class="${i ? '' : 'sel'}">
-      <input type="radio" name="ps" value="${safe(o.id)}" ${i ? '' : 'checked'}>
-      <span><b>${safe(o.name)}</b>${i ? '' : ' <small>(nearest)</small>'}<br><small>${o.dist_m.toFixed(0)} m away · radio range ${o.range_m.toFixed(0)} m</small></span>
+    const live = id => (T.stations || []).find(s => s.id === id) || {};
+    pa.station_options.forEach(o => { const s = live(o.id); o.email = s.email || ''; o.phone = s.phone || ''; });
+    const ok = o => o.email || o.phone, first = pa.station_options.find(ok);
+    pickedStation = first ? first.id : null;
+    $('stationPick').innerHTML = pa.station_options.map((o, i) => `<label data-id="${safe(o.id)}" class="${o.id === pickedStation ? 'sel' : ''} ${ok(o) ? '' : 'disabled'}">
+      <input type="radio" name="ps" value="${safe(o.id)}" ${o.id === pickedStation ? 'checked' : ''} ${ok(o) ? '' : 'disabled'}>
+      <span><b>${safe(o.name)}</b>${i ? '' : ' <small>(nearest)</small>'}<br><small>${o.dist_m.toFixed(0)} m away · radio range ${o.range_m.toFixed(0)} m</small>
+      <br><small class="contact">${ok(o) ? (o.email ? '✉ ' + safe(o.email) : '') + (o.email && o.phone ? ' · ' : '') + (o.phone ? '☎ ' + safe(o.phone) : '')
+        : '⚠ no contact — add an e-mail or phone in the station card'}</small></span>
       <span class="${o.in_range ? 'in' : 'out'}">${o.in_range ? 'IN RANGE · instant' : `OUT OF RANGE · fly ${o.fly_m.toFixed(0)} m+ (≥${o.eta_sec} s)`}</span></label>`).join('');
     updateYes(pa);
   }
   if (!$('alertSnap').getAttribute('src') && pa.snapshot_sha256) $('alertSnap').src = `/api/alert/${pa.id}.jpg?h=${pa.snapshot_sha256.slice(0, 8)}`;
 }
 let pickedStation = null;
+function contactLinks(a) {
+  if (a.status !== 'DELIVERED') return '';
+  return (a.station_phone ? ` <a href="#" data-open="wa" data-id="${safe(a.id)}">WhatsApp ↗</a>` : '') +
+         (a.station_email && !(T && T.email_configured) ? ` <a href="#" data-open="mail" data-id="${safe(a.id)}">E-mail ↗</a>` : '');
+}
+function mailTag(a) {
+  const n = (a.notify || []).find(x => x.channel === 'email');
+  if (!n) return (a.notify || []).length ? '<br><small class="mail-OUT">☎ WhatsApp</small>' : '';
+  if (n.status.startsWith('OPEN IN MAIL')) return '<br><small class="mail-OUT">✉ mail app</small>';
+  const cls = n.status === 'SENT' ? 'SENT' : n.status.startsWith('FAILED') || n.status.startsWith('NOT') ? 'FAIL' : n.status.startsWith('SENDING') ? 'WAIT' : 'OUT';
+  const txt = n.status === 'SENT' ? '✉ e-mailed' : cls === 'FAIL' ? '✉ failed' : cls === 'WAIT' ? '✉ sending…' : '✉ outbox';
+  return `<br><small class="mail-${cls}">${txt}</small>`;
+}
+// ---- station contact boxes
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
+function normPhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length === 10) d = '91' + d; else if (d.length === 11 && d[0] === '0') d = '91' + d.slice(1);
+  return d.length >= 10 && d.length <= 15 ? '+' + d : null;     // null = invalid
+}
+function renderStations(t) {
+  const box = $('erStations'), list = t.stations || [], ids = list.map(p => p.id).join();
+  if (box.dataset.ids !== ids) {
+    box.dataset.ids = ids;
+    box.innerHTML = list.map(p => `<div class="ps-card" data-id="${safe(p.id)}">
+      <b class="ps-name"></b><div class="ps-dist"></div><small class="ps-gps"></small>
+      <div class="ps-form">
+        <label>✉ E-mail<input type="email" data-f="email" placeholder="abc@gmail.com" autocomplete="off"></label>
+        <label>☎ Phone<input type="tel" data-f="phone" placeholder="9876543210" autocomplete="off"></label>
+        <div class="ps-actions"><button class="ghost" data-save>Save contact</button><span class="ps-msg"></span></div>
+      </div></div>`).join('');
+  }
+  for (const p of list) {
+    const card = box.querySelector(`[data-id="${p.id}"]`); if (!card) continue;
+    card.querySelector('.ps-name').textContent = '🛡 ' + p.name;
+    card.querySelector('.ps-dist').innerHTML = `${p.dist_m.toFixed(0)} m from drone · range ${p.range_m.toFixed(0)} m · <span class="${p.in_range ? 'in' : 'out'}">${p.in_range ? 'IN RADIO RANGE' : 'OUT OF RANGE'}</span>`;
+    card.querySelector('.ps-gps').textContent = `GPS ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}`;
+    for (const inp of card.querySelectorAll('input')) {
+      if (document.activeElement !== inp && !inp.dataset.dirty) inp.value = p[inp.dataset.f] || '';
+    }
+    card.classList.toggle('no-contact', !p.email && !p.phone);
+    const msg = card.querySelector('.ps-msg');
+    if (!msg.dataset.hold) msg.textContent = (!p.email && !p.phone) ? '⚠ add an e-mail or phone to receive alerts'
+      : (p.email ? (t.email_configured ? '✉ e-mail sent automatically' : '✉ opens your mail app') : '') + (p.phone ? (p.email ? ' · ' : '') + '☎ WhatsApp message' : '');
+  }
+}
+function saveStation(card) {
+  const email = card.querySelector('[data-f=email]').value.trim(), rawPhone = card.querySelector('[data-f=phone]').value.trim();
+  const msg = card.querySelector('.ps-msg'), phone = normPhone(rawPhone);
+  const fail = text => { msg.textContent = '⚠ ' + text; msg.dataset.hold = 1; msg.className = 'ps-msg err'; setTimeout(() => { delete msg.dataset.hold; msg.className = 'ps-msg'; }, 3500); };
+  if (!email && !rawPhone) return fail('Enter an e-mail or a phone number');
+  if (email && !EMAIL_RE.test(email)) return fail('E-mail looks wrong (example: abc@gmail.com)');
+  if (rawPhone && phone === null) return fail('Phone looks wrong (example: 9876543210)');
+  card.querySelectorAll('input').forEach(i => delete i.dataset.dirty);
+  cmd({action: 'station_update', id: card.dataset.id, email, phone: phone || ''}, true).then(() => {
+    msg.textContent = '✓ Saved'; msg.dataset.hold = 1; msg.className = 'ps-msg ok';
+    setTimeout(() => { delete msg.dataset.hold; msg.className = 'ps-msg'; }, 2500);
+  });
+}
+$('erStations').addEventListener('input', e => { if (e.target.dataset.f) e.target.dataset.dirty = 1; });
+$('erStations').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.f) saveStation(e.target.closest('.ps-card')); });
+$('erStations').onclick = e => { const b = e.target.closest('[data-save]'); if (b) saveStation(b.closest('.ps-card')); };
+
+// ---- alert message for e-mail / WhatsApp
+function alertText(a) {
+  return `🚨 CROWD ALERT ${a.id}${a.test ? ' (TEST)' : ''}\n${a.persons} persons detected near the drone in ${a.zone} (limit ${a.limit}).\n` +
+    `Detected: ${a.created}\nGPS: ${a.latitude.toFixed(6)}, ${a.longitude.toFixed(6)}\nGoogle Maps: ${a.maps_url}\n` +
+    `Drone altitude: ${a.alt} m\n— GARUDA OPS drone dashboard`;
+}
+function waLink(phone, a) { return `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(alertText(a))}`; }
+function mailLink(email, a) {
+  return `mailto:${email}?subject=${encodeURIComponent(`CROWD ALERT ${a.id}: ${a.persons} persons at ${a.zone}`)}&body=${encodeURIComponent(alertText(a))}`;
+}
+function openContacts(a, st) {           // called inside the operator's click, so the browser allows it
+  if (st.phone) window.open(waLink(st.phone, a), '_blank', 'noopener');
+  if (st.email && !(T && T.email_configured)) { const l = document.createElement('a'); l.href = mailLink(st.email, a); l.click(); }
+}
+$('erBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-open]'); if (!b || !T) return;
+  const a = T.alerts.find(x => x.id === b.dataset.id); if (!a) return;
+  const st = {email: a.station_email, phone: a.station_phone};
+  if (b.dataset.open === 'wa') window.open(waLink(st.phone, a), '_blank', 'noopener');
+  else { const l = document.createElement('a'); l.href = mailLink(st.email, a); l.click(); }
+});
+$('erCopy').onclick = e => { e.preventDefault(); if (T) navigator.clipboard.writeText(`${T.gps.lat.toFixed(6)}, ${T.gps.lon.toFixed(6)}`).then(() => toast('GPS copied')); };
 function updateYes(pa) {
   const o = (pa.station_options || []).find(x => x.id === pickedStation);
+  $('alertYes').disabled = !o;
+  $('alertWait').textContent = o ? 'Waiting for operator decision…' : '⚠ No station has a contact. Add an e-mail or phone in the Emergency Response panel.';
   $('alertYes').textContent = !o ? '✔ YES, SEND ALERT' : o.in_range ? '✔ YES, SEND ALERT' : '✔ YES, FLY & DELIVER';
 }
 $('stationPick').onchange = e => {
@@ -168,6 +262,11 @@ $('stationPick').onchange = e => {
 };
 function decide(decision) {
   if (!shownAlert) return;
+  if (decision === 'send' && T && T.pending_alert) {
+    const pa = T.pending_alert, o = (pa.station_options || []).find(x => x.id === pickedStation);
+    if (!o) return;
+    if (o.in_range) openContacts(pa, o);     // out of range: links appear in the table once delivered
+  }
   $('alertYes').disabled = $('alertNo').disabled = true; $('alertWait').textContent = 'Sending…';
   cmd({action: 'alert_decision', id: shownAlert, decision, station: pickedStation}, true)
     .then(() => toast(decision === 'send' ? '🚨 Alert sent to ' + (($('stationPick').querySelector('label.sel b') || {}).textContent || 'police') : 'Alert declined'));

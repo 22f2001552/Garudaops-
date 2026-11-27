@@ -1,0 +1,10 @@
+{
+  "email": {
+    "enabled": true,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "yourname@gmail.com",
+    "app_password": "abcd efgh ijkl mnop",
+    "from_name": "GARUDA OPS Drone"
+  }
+}

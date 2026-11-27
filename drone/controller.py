@@ -25,6 +25,7 @@ import cv2
 import numpy as np
 
 from . import vision
+from .notifier import Notifier, maps_url
 from .avoidance import AvoidancePlanner, detect_obstacle_regions, preprocess_depth, zone_label
 
 MODES = ('IDLE', 'TAKEOFF', 'HOLD', 'MANUAL', 'AUTONOMOUS', 'GOTO', 'PATROL', 'RTH', 'LANDING')
@@ -71,11 +72,28 @@ LIMITS = dict(alert_limit=(1, 200), forward_speed=(0.2, 8), avoid_speed_sideways
 # Police stations (local metres from the take-off point, x = north, y = east).
 # Override / move them with Alt+click on the map; saved to data/police_stations.json.
 DEFAULT_STATIONS = {
-    'MOCK': [dict(id='PS-A', name='Police Station A (near)', x=60.0, y=5.0, range_m=80.0),
-             dict(id='PS-B', name='Police Station B (far)', x=-80.0, y=-70.0, range_m=80.0)],
-    'AIRSIM': [dict(id='PS-A', name='Police Station A (near)', x=-35.0, y=0.0, range_m=80.0),
-               dict(id='PS-B', name='Police Station B (far)', x=180.0, y=0.0, range_m=80.0)],
+    'MOCK': [dict(id='PS-A', name='Police Station A (near)', x=60.0, y=5.0, range_m=80.0, email='', phone=''),
+             dict(id='PS-B', name='Police Station B (far)', x=-80.0, y=-70.0, range_m=80.0, email='', phone='')],
+    'AIRSIM': [dict(id='PS-A', name='Police Station A (near)', x=-35.0, y=0.0, range_m=80.0, email='', phone=''),
+               dict(id='PS-B', name='Police Station B (far)', x=180.0, y=0.0, range_m=80.0, email='', phone='')],
 }
+
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
+
+
+def normalize_phone(raw):
+    """'98765 43210' -> '+919876543210'; '+91-98765-43210' -> '+919876543210'; '' -> ''.
+    Returns '' when it does not look like a phone number."""
+    raw = raw.strip()
+    if not raw:
+        return ''
+    digits = re.sub(r'\D', '', raw)
+    if len(digits) == 10:
+        digits = '91' + digits                       # Indian mobile without country code
+    elif len(digits) == 11 and digits.startswith('0'):
+        digits = '91' + digits[1:]
+    return '+' + digits if 10 <= len(digits) <= 15 else ''
 
 
 def wrap(a):
@@ -141,6 +159,7 @@ class DroneController(threading.Thread):
         self._alert_snap_pending = None
         self.delivery = None              # active "fly to station to deliver" mission
         self.stations = self._load_stations()
+        self.notifier = Notifier(self.root, self.log_line)
         self.log_line('INFO', f'Backend: {backend.name} · Detector: {detector.label}')
 
     # ----------------------------------------------------------- public API
@@ -178,7 +197,7 @@ class DroneController(threading.Thread):
                 pos=dict(x=round(float(st['x']), 2), y=round(float(st['y']), 2), alt=round(-float(st['z']), 2)),
                 vel=dict(vx=round(float(st['vx']), 2), vy=round(float(st['vy']), 2), vz=round(float(st['vz']), 2), speed=round(float(speed), 2)),
                 heading=round(math.degrees(st['yaw']) % 360, 1),
-                gps=dict(lat=round(st['lat'], 7), lon=round(st['lon'], 7)),
+                gps=dict(lat=round(st['lat'], 7), lon=round(st['lon'], 7), maps_url=maps_url(st['lat'], st['lon'])),
                 zone=zone_of(st['x'], st['y']),
                 sectors=dict(left=bool(o['left']), center=bool(o['center']), right=bool(o['right']),
                              dl=_f(o['min_dist_left']), dc=_f(o['min_dist_center']), dr=_f(o['min_dist_right']),
@@ -203,6 +222,7 @@ class DroneController(threading.Thread):
                 last_manifest=self.last_manifest,
                 alerts=[{k: v for k, v in al.items() if k != 'snapshot'} for al in self.alerts[-20:]],
                 stations=self._stations_view(),
+                email_configured=self.notifier.email_configured(),
                 delivery=self.delivery,
                 pending_alert=next(({k: v for k, v in al.items() if k != 'snapshot'}
                                     for al in self.alerts if al['status'] == 'PENDING'), None),
@@ -317,6 +337,25 @@ class DroneController(threading.Thread):
             self.set_mode('IDLE', 'simulation reset')
         elif a == 'alert_decision':
             self._decide_alert(str(c.get('id')), str(c.get('decision')), c.get('station'))
+        elif a == 'station_update':
+            ps = self._station(c.get('id'))
+            if not ps:
+                raise ValueError('unknown station')
+            email = str(c.get('email', ps.get('email', ''))).strip()
+            phone = normalize_phone(str(c.get('phone', ps.get('phone', ''))))
+            if email and not EMAIL_RE.match(email):
+                raise ValueError(f'invalid e-mail: {email}')
+            if c.get('phone') and not phone:
+                raise ValueError(f"invalid phone number: {c.get('phone')}")
+            if not email and not phone:
+                raise ValueError('enter an e-mail or a phone number for the station')
+            ps['email'], ps['phone'] = email, phone
+            if c.get('name'):
+                ps['name'] = str(c['name']).strip()[:80]
+            if 'range_m' in c:
+                ps['range_m'] = max(5.0, min(2000.0, float(c['range_m'])))
+            self._save_stations()
+            self.log_line('NAV', f"{ps['name']} updated: e-mail {ps['email'] or '-'}, phone {ps['phone'] or '-'}")
         elif a == 'station_move':
             self._move_station(c.get('id'), float(c['x']), float(c['y']))
         elif a == 'alert_test':
@@ -470,7 +509,8 @@ class DroneController(threading.Thread):
         else:
             rec_el, fno = None, self.tick_no
         for k in list(views):
-            views[k] = vision.stamp(views[k], cap_dt, fno, src, rec_el)
+            views[k] = vision.stamp(views[k], cap_dt, fno, src, rec_el,
+                                    gps=(st['lat'], st['lon'], -st['z'], math.degrees(st['yaw']) % 360))
         if self._alert_snap_pending and 'crowd' in views:
             self._save_alert_snapshot(self._alert_snap_pending, views['crowd'])
             self._alert_snap_pending = None
@@ -515,6 +555,7 @@ class DroneController(threading.Thread):
                   zone=zone_of(st['x'], st['y']),
                   x=round(float(st['x']), 1), y=round(float(st['y']), 1), alt=round(-float(st['z']), 1),
                   latitude=round(float(st['lat']), 7), longitude=round(float(st['lon']), 7),
+                  maps_url=maps_url(float(st['lat']), float(st['lon'])), notify=[],
                   station=None, station_id=None, station_options=self._station_options(st['x'], st['y']),
                   delivery=None, delivered=None, decided=None, snapshot=None, snapshot_sha256=None,
                   recording=self.rec.base if self.rec else None)
@@ -555,7 +596,10 @@ class DroneController(threading.Thread):
             ps = self._station(station_id or al['station_id'])
             if not ps:
                 raise ValueError('unknown police station')
+            if not ps.get('email') and not ps.get('phone'):
+                raise ValueError(f"{ps['name']} has no e-mail or phone — add one first")
             al['station_id'], al['station'] = ps['id'], ps['name']
+            al['station_email'], al['station_phone'] = ps.get('email', ''), ps.get('phone', '')
             d = math.hypot(ps['x'] - self.st['x'], ps['y'] - self.st['y'])
             self.event('Police alert sent' + tag, 'CRITICAL',
                        f"{al['id']} → {ps['name']} ({d:.0f} m away): {al['persons']} persons at {al['zone']}, "
@@ -586,7 +630,7 @@ class DroneController(threading.Thread):
         try:
             saved = json.loads(f.read_text())
             if saved.get(key):
-                return saved[key]
+                return [dict(dict(email='', phone='', range_m=80.0), **ps) for ps in saved[key]]
         except Exception:
             pass
         return [dict(s) for s in DEFAULT_STATIONS[key]]
@@ -624,6 +668,7 @@ class DroneController(threading.Thread):
             d = math.hypot(ps['x'] - x, ps['y'] - y)
             gap = max(0.0, d - ps['range_m'])
             out.append(dict(id=ps['id'], name=ps['name'], dist_m=round(d, 1), range_m=ps['range_m'],
+                            email=ps.get('email', ''), phone=ps.get('phone', ''),
                             in_range=d <= ps['range_m'],
                             fly_m=round(gap, 1), eta_sec=round(gap / max(0.3, self.cfg['forward_speed']), 0)))
         return sorted(out, key=lambda o: o['dist_m'])
@@ -646,6 +691,29 @@ class DroneController(threading.Thread):
         self.event('Alert delivered to police' + tag, 'CRITICAL',
                    f"{al['id']} received by {ps['name']} via {method} at {al['delivered']} "
                    f"({al['delivery_sec']} s after detection)", every=0)
+        email_ok = self.notifier.email_configured()
+        al['notify'] = []
+        if ps.get('email'):
+            al['notify'].append(dict(channel='email', to=ps['email'], at=None,
+                                     status='SENDING…' if email_ok else 'OPEN IN MAIL APP (Gmail not configured)'))
+        if ps.get('phone'):
+            al['notify'].append(dict(channel='whatsapp', to=ps['phone'], status='OPENED IN WHATSAPP (operator sends)', at=None))
+        payload = {k: v for k, v in al.items() if k != 'snapshot'}
+
+        def done(channel, to, status, file):
+            entry = next((n for n in al['notify'] if n['channel'] == 'email'), None)
+            if entry is None:
+                return
+            if not email_ok and status.startswith('SAVED'):
+                status = entry['status']                     # keep the "open in mail app" hint
+            entry.update(to=to, status=status, at=vision.fmt_ts(_dt.datetime.now().astimezone()), file=file)
+            lvl = 'EVENT' if status == 'SENT' else 'WARN'
+            self.log_line(lvl, f"{al['id']} e-mail to {to}: {status}")
+            if status == 'SENT':
+                self.event('Alert e-mailed to police' + tag, 'CRITICAL', f"{al['id']} e-mailed to {to} ({ps['name']})", every=0)
+            self._save_alert_log()
+        if ps.get('email'):
+            self.notifier.send(payload, dict(ps), al.get('snapshot'), done)
         self._save_alert_log()
 
     def _check_deliveries(self, st):
