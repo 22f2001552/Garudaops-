@@ -1,0 +1,1275 @@
+{
+  "schema_version": "1.0",
+  "name": "Live flight session_20261127_110726",
+  "origin": "RECORDED LIVE FROM AIRSIM via the GARUDA\u2013DRDO bridge (depth-based avoidance + detections). Counts come from the selected detector.",
+  "video_filename": "session_20261127_110726.mp4",
+  "duration_sec": 54.4,
+  "fps_sampling_interval_sec": 2,
+  "coordinate_note": "AirSim GPS (geo-referenced from the simulator home point)",
+  "observations": [
+    {
+      "time_sec": 0.3,
+      "person_count": 0,
+      "vehicle_count": 3,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 0.14,
+      "heading_deg": 159.2,
+      "mode": "IDLE",
+      "decision": "ON GROUND \u2014 ready for take-off",
+      "min_dist_left": 0.41,
+      "min_dist_center": 0.4,
+      "min_dist_right": 0.41,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 107.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 42.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 56.0
+        }
+      ]
+    },
+    {
+      "time_sec": 3.6,
+      "person_count": 0,
+      "vehicle_count": 3,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 0.14,
+      "heading_deg": 159.2,
+      "mode": "IDLE",
+      "decision": "ON GROUND \u2014 ready for take-off",
+      "min_dist_left": 0.41,
+      "min_dist_center": 0.4,
+      "min_dist_right": 0.41,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 107.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 42.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 56.0
+        }
+      ]
+    },
+    {
+      "time_sec": 4.1,
+      "person_count": 0,
+      "vehicle_count": 3,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 0.14,
+      "heading_deg": 159.2,
+      "mode": "TAKEOFF",
+      "decision": "TAKING OFF \u2192 5.0 m",
+      "min_dist_left": 0.41,
+      "min_dist_center": 0.4,
+      "min_dist_right": 0.41,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 107.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.2
+        }
+      ]
+    },
+    {
+      "time_sec": 6.3,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 1.7,
+      "heading_deg": 159.2,
+      "mode": "TAKEOFF",
+      "decision": "TAKING OFF \u2192 5.0 m",
+      "min_dist_left": 13.04,
+      "min_dist_center": 12.36,
+      "min_dist_right": 19.97,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 81.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 40.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 21.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 37.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 51.3
+        }
+      ]
+    },
+    {
+      "time_sec": 8.3,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.88,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 14.6,
+      "min_dist_center": 14.35,
+      "min_dist_right": 25.51,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 107.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 67.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 32.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.7
+        }
+      ]
+    },
+    {
+      "time_sec": 10.2,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 14.81,
+      "min_dist_center": 14.6,
+      "min_dist_right": 26.01,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 108.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 67.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 32.3
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.5
+        }
+      ]
+    },
+    {
+      "time_sec": 12.2,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.0,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 14.83,
+      "min_dist_center": 14.62,
+      "min_dist_right": 26.04,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 108.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 67.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 32.3
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.5
+        }
+      ]
+    },
+    {
+      "time_sec": 14.1,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.0,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 14.83,
+      "min_dist_center": 14.62,
+      "min_dist_right": 26.0,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 108.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 67.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 32.3
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.5
+        }
+      ]
+    },
+    {
+      "time_sec": 16.2,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6414993,
+      "longitude": -122.1418896,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.96,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 13.95,
+      "min_dist_center": 13.88,
+      "min_dist_right": 25.38,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 98.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 65.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 31.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 40.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 54.7
+        }
+      ]
+    },
+    {
+      "time_sec": 18.2,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.6414716,
+      "longitude": -122.141874,
+      "zone": "SECTOR BRAVO",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.97,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 10.95,
+      "min_dist_center": 12.03,
+      "min_dist_right": 22.97,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 104.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 62.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 29.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 37.3
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 51.8
+        }
+      ]
+    },
+    {
+      "time_sec": 20.2,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6414413,
+      "longitude": -122.141857,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 8.62,
+      "min_dist_center": 10.1,
+      "min_dist_right": 20.45,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 100.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 59.3
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 27.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 34.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 48.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 122.5
+        }
+      ]
+    },
+    {
+      "time_sec": 22.1,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6414124,
+      "longitude": -122.1418408,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 8.18,
+      "min_dist_center": 8.24,
+      "min_dist_right": 54.82,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 97.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 55.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 30.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 45.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 111.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 74.9
+        }
+      ]
+    },
+    {
+      "time_sec": 24.3,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.641375,
+      "longitude": -122.1418198,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 11.83,
+      "min_dist_center": 7.73,
+      "min_dist_right": 26.42,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 94.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 51.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 26.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 107.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 71.9
+        }
+      ]
+    },
+    {
+      "time_sec": 26.2,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6413456,
+      "longitude": -122.1418033,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 7.48,
+      "min_dist_center": 6.62,
+      "min_dist_right": 23.19,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 91.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 47.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 23.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 39.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 104.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 67.8
+        }
+      ]
+    },
+    {
+      "time_sec": 28.4,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.641312,
+      "longitude": -122.1417873,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.06,
+      "heading_deg": 159.3,
+      "mode": "AUTONOMOUS",
+      "decision": "CENTRE BLOCKED \u2192 SHIFT RIGHT",
+      "min_dist_left": 3.03,
+      "min_dist_center": 3.4,
+      "min_dist_right": 10.59,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 126.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 14.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 20.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 36.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 117.7
+        }
+      ]
+    },
+    {
+      "time_sec": 30.4,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6412982,
+      "longitude": -122.1418004,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.0,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "CENTRE BLOCKED \u2192 SHIFT RIGHT",
+      "min_dist_left": 3.17,
+      "min_dist_center": 4.43,
+      "min_dist_right": 17.56,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 84.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 43.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 18.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 34.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 99.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 62.8
+        }
+      ]
+    },
+    {
+      "time_sec": 32.0,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6412915,
+      "longitude": -122.1418189,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.0,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "FORWARD BIAS STEP (anti-stall)",
+      "min_dist_left": 4.51,
+      "min_dist_center": 6.45,
+      "min_dist_right": 17.31,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 83.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 42.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 17.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 33.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 100.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 57.1
+        }
+      ]
+    },
+    {
+      "time_sec": 34.3,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6412761,
+      "longitude": -122.1418291,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.96,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 5.75,
+      "min_dist_center": 7.17,
+      "min_dist_right": 15.64,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 79.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 41.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 15.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 31.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 96.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 54.1
+        }
+      ]
+    },
+    {
+      "time_sec": 36.0,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6412529,
+      "longitude": -122.141819,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.97,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "SLIGHT OBSTACLE LEFT \u2192 ADJUST RIGHT",
+      "min_dist_left": 4.95,
+      "min_dist_center": 7.1,
+      "min_dist_right": 13.22,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 79.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 38.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 13.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 29.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 94.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 52.5
+        }
+      ]
+    },
+    {
+      "time_sec": 38.3,
+      "person_count": 0,
+      "vehicle_count": 6,
+      "crowd_level": "LOW",
+      "latitude": 47.6412167,
+      "longitude": -122.1418055,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "SLIGHT OBSTACLE LEFT \u2192 ADJUST RIGHT",
+      "min_dist_left": 3.82,
+      "min_dist_center": 5.49,
+      "min_dist_right": 9.57,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 75.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 34.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 11.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 25.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 90.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 58.8
+        }
+      ]
+    },
+    {
+      "time_sec": 40.0,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.641186,
+      "longitude": -122.141799,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "CENTRE BLOCKED \u2192 SHIFT RIGHT",
+      "min_dist_left": 3.29,
+      "min_dist_center": 6.56,
+      "min_dist_right": 8.75,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 49.2
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 26.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 14.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 21.9
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 58.3
+        }
+      ]
+    },
+    {
+      "time_sec": 42.1,
+      "person_count": 0,
+      "vehicle_count": 5,
+      "crowd_level": "LOW",
+      "latitude": 47.641163,
+      "longitude": -122.1418075,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.02,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "FORWARD BIAS STEP (anti-stall)",
+      "min_dist_left": 8.5,
+      "min_dist_center": 7.16,
+      "min_dist_right": 37.42,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 69.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 28.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 12.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 22.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 84.1
+        }
+      ]
+    },
+    {
+      "time_sec": 44.3,
+      "person_count": 0,
+      "vehicle_count": 4,
+      "crowd_level": "LOW",
+      "latitude": 47.641142,
+      "longitude": -122.141806,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.96,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 7.16,
+      "min_dist_center": 6.97,
+      "min_dist_right": 46.15,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 66.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 44.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 26.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 84.7
+        }
+      ]
+    },
+    {
+      "time_sec": 46.2,
+      "person_count": 0,
+      "vehicle_count": 3,
+      "crowd_level": "LOW",
+      "latitude": 47.6411127,
+      "longitude": -122.1417916,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.98,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 13.38,
+      "min_dist_center": 7.78,
+      "min_dist_right": 29.84,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 63.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 23.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 78.8
+        }
+      ]
+    },
+    {
+      "time_sec": 48.4,
+      "person_count": 0,
+      "vehicle_count": 4,
+      "crowd_level": "LOW",
+      "latitude": 47.6410801,
+      "longitude": -122.1417738,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 4.99,
+      "heading_deg": 159.2,
+      "mode": "AUTONOMOUS",
+      "decision": "PATH CLEAR \u2192 FORWARD",
+      "min_dist_left": 9.52,
+      "min_dist_center": 9.68,
+      "min_dist_right": 8.51,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 60.6
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 83.7
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 19.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 75.9
+        }
+      ]
+    },
+    {
+      "time_sec": 50.3,
+      "person_count": 0,
+      "vehicle_count": 4,
+      "crowd_level": "LOW",
+      "latitude": 47.6410547,
+      "longitude": -122.1417599,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.06,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 6.93,
+      "min_dist_center": 14.54,
+      "min_dist_right": 10.29,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 58.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 92.0
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 16.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 74.1
+        }
+      ]
+    },
+    {
+      "time_sec": 52.2,
+      "person_count": 0,
+      "vehicle_count": 4,
+      "crowd_level": "LOW",
+      "latitude": 47.6410482,
+      "longitude": -122.1417566,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.01,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 6.32,
+      "min_dist_center": 14.91,
+      "min_dist_right": 9.11,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 57.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 81.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 15.5
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 72.8
+        }
+      ]
+    },
+    {
+      "time_sec": 54.2,
+      "person_count": 0,
+      "vehicle_count": 4,
+      "crowd_level": "LOW",
+      "latitude": 47.6410467,
+      "longitude": -122.1417558,
+      "zone": "SECTOR CHARLIE",
+      "source": "LIVE_AIRSIM",
+      "altitude_m": 5.0,
+      "heading_deg": 159.2,
+      "mode": "HOLD",
+      "decision": "HOLDING POSITION",
+      "min_dist_left": 6.17,
+      "min_dist_center": 14.73,
+      "min_dist_right": 9.2,
+      "detections": [
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 56.8
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 80.1
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 15.4
+        },
+        {
+          "label": "car",
+          "conf": 1.0,
+          "dist": 72.1
+        }
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "EVT-004",
+      "time_sec": 3.7,
+      "type": "Take-off",
+      "severity": "INFO",
+      "latitude": 47.6415057,
+      "longitude": -122.1418931,
+      "zone": "SECTOR BRAVO",
+      "description": "Climbing to 5.0 m"
+    },
+    {
+      "id": "EVT-005",
+      "time_sec": 27.0,
+      "type": "Obstacle avoidance manoeuvre",
+      "severity": "LOW",
+      "latitude": 47.641331,
+      "longitude": -122.1417951,
+      "zone": "SECTOR CHARLIE",
+      "description": "CENTRE BLOCKED \u2192 SHIFT RIGHT. Distances L/C/R = 5.4 / 5.0 / 21.7 m"
+    },
+    {
+      "id": "EVT-006",
+      "time_sec": 30.3,
+      "type": "Obstacle avoidance manoeuvre",
+      "severity": "LOW",
+      "latitude": 47.6412982,
+      "longitude": -122.1418004,
+      "zone": "SECTOR CHARLIE",
+      "description": "CENTRE BLOCKED \u2192 SHIFT RIGHT. Distances L/C/R = 3.2 / 4.4 / 17.6 m"
+    },
+    {
+      "id": "EVT-007",
+      "time_sec": 39.6,
+      "type": "Obstacle avoidance manoeuvre",
+      "severity": "LOW",
+      "latitude": 47.6411925,
+      "longitude": -122.1418002,
+      "zone": "SECTOR CHARLIE",
+      "description": "CENTRE BLOCKED \u2192 SHIFT RIGHT. Distances L/C/R = 3.4 / 4.9 / 8.4 m"
+    },
+    {
+      "id": "EVT-008",
+      "time_sec": 48.8,
+      "type": "Emergency stop",
+      "severity": "HIGH",
+      "latitude": 47.641074,
+      "longitude": -122.1417704,
+      "zone": "SECTOR CHARLIE",
+      "description": "Operator pressed E-STOP \u2014 drone holding position"
+    }
+  ]
+}

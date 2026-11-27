@@ -10,6 +10,9 @@ Each tick (~10 Hz):
   6. send the velocity command; build requested views; raise incidents; record
 """
 import collections
+import datetime as _dt
+import hashlib
+import platform
 import json
 import math
 import queue
@@ -114,6 +117,8 @@ class DroneController(threading.Thread):
         self.error = None
         self.rec = None
         self._still = None
+        self.tick_no = 0
+        self.last_manifest = None
         self.log_line('INFO', f'Backend: {backend.name} · Detector: {detector.label}')
 
     # ----------------------------------------------------------- public API
@@ -173,6 +178,7 @@ class DroneController(threading.Thread):
                 fps=round(self.fps, 1), loop_ms=round(self.loop_ms, 1),
                 cfg=self.cfg,
                 recording=self.rec.info() if self.rec else None,
+                last_manifest=self.last_manifest,
             )
 
     def stop(self):
@@ -287,7 +293,15 @@ class DroneController(threading.Thread):
                 self.log_line('REC', f'Recording → {self.rec.base}')
             elif c.get('state') == 'stop' and self.rec:
                 path = self.rec.close(self.events)
+                m = self.rec.manifest
+                self.last_manifest = dict(name=self.rec.base, video=m.get('video_file'),
+                                          video_sha256=m.get('video_sha256'), frames=m.get('source_frames'),
+                                          start=m.get('start_time'), end=m.get('end_time'))
                 self.log_line('REC', f'Saved session {path}')
+                if m.get('video_sha256'):
+                    self.log_line('REC', f"Video SHA-256 {m['video_sha256']}")
+                self.log_line('REC', f'Integrity manifest {self.rec.base}.manifest.json — '
+                                     f'verify with: python tools/verify_recording.py {self.rec.base}')
                 self.rec = None
         else:
             raise ValueError(f'unknown action {a}')
@@ -343,6 +357,8 @@ class DroneController(threading.Thread):
         imgs = self.b.images()
         if imgs is None:
             return
+        cap_dt = _dt.datetime.now().astimezone()      # capture time used for the evidence stamp
+        self.tick_no += 1
         cfg = self.cfg
         scene, depth = imgs['scene'], imgs['depth']
         if depth.shape != scene.shape[:2]:
@@ -405,13 +421,22 @@ class DroneController(threading.Thread):
             views['edges'] = vision.edges_view(scene, roi_start, cfg['canny_lo'], cfg['canny_hi'])
         if 'quad' in need:
             views['quad'] = vision.quad_view(views)
+        # evidence strip on every view: capture time (ms), recording clock, frame number
+        src = 'AIRSIM' if self.b.name.startswith('AIRSIM') else 'MOCK SIM'
+        if self.rec:
+            rec_el = (cap_dt.timestamp() - self.rec.t_begin)
+            fno = self.rec.src_frames + 1
+        else:
+            rec_el, fno = None, self.tick_no
+        for k in list(views):
+            views[k] = vision.stamp(views[k], cap_dt, fno, src, rec_el)
         enc = {}
         for k, v in views.items():
             ok, buf = cv2.imencode('.jpg', v, [cv2.IMWRITE_JPEG_QUALITY, 80])
             if ok:
                 enc[k] = buf.tobytes()
         if self.rec and 'detection' in views:
-            self.rec.frame(views['detection'], self._observation(st, obs, persons, level, dets))
+            self.rec.frame(views['detection'], self._observation(st, obs, persons, level, dets), cap_dt)
         with self.frame_cond:
             self.jpeg.update(enc)
             self.frame_id += 1
@@ -607,6 +632,11 @@ class Recorder:
         self.obs = []
         self.incidents = []
         self._next_obs = 0.0
+        self.src_frames = 0                  # unique stamped frames received
+        self.chain = hashlib.sha256(b'GARUDA-OPS-EVIDENCE:' + self.base.encode()).hexdigest()
+        self.frame_log = []                  # [frame_no, capture time] for every stamped frame
+        self.first_ts = self.last_ts = None
+        self.manifest = {}
 
     def _open(self, w, h):
         for fourcc, ext in (('avc1', '.mp4'), ('VP80', '.webm'), ('mp4v', '.mp4')):
@@ -622,8 +652,16 @@ class Recorder:
                 pass
         self.video_name, self.codec = None, None
 
-    def frame(self, img, obs_row):
+    def frame(self, img, obs_row, cap_dt=None):
         t = time.time() - self.t_begin
+        cap_dt = cap_dt or _dt.datetime.now().astimezone()
+        self.src_frames += 1
+        ts = vision.fmt_ts(cap_dt)
+        self.first_ts = self.first_ts or ts
+        self.last_ts = ts
+        self.frame_log.append([self.src_frames, ts])
+        # hash chain over every frame's pixels: any removed/reordered/edited frame breaks it
+        self.chain = hashlib.sha256(self.chain.encode() + img.tobytes()).hexdigest()
         if self.writer is None and self.video_name is None and self.frames == 0:
             self._open(img.shape[1], img.shape[0])
         if self.writer is not None:
@@ -667,7 +705,31 @@ class Recorder:
             incidents=self.incidents)
         out = self.root / 'data' / (self.base + '.json')
         out.write_text(json.dumps(data, indent=2))
+        video_path = self.root / 'media' / self.video_name if self.video_name else None
+        self.manifest = dict(
+            purpose='Tamper-evidence record for a GARUDA OPS drone recording. Recompute the SHA-256 '
+                    'hashes of the files below; any change to the files makes them differ.',
+            session=self.base,
+            start_time=self.first_ts, end_time=self.last_ts, duration_sec=dur,
+            source_frames=self.src_frames, video_frames_written=self.frames,
+            video_fps=self.FPS, codec=getattr(self, 'codec', None),
+            video_file=self.video_name,
+            video_sha256=sha256_file(video_path) if video_path and video_path.is_file() else None,
+            dataset_file=out.name, dataset_sha256=sha256_file(out),
+            frame_chain_sha256=self.chain,
+            frame_log=self.frame_log,
+            backend=self.backend, host=platform.node(),
+            generated_at=vision.fmt_ts(_dt.datetime.now().astimezone()))
+        (self.root / 'data' / (self.base + '.manifest.json')).write_text(json.dumps(self.manifest, indent=1))
         return out.name
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 SESSION_RE = re.compile(r'^session_\d{8}_\d{6}$')

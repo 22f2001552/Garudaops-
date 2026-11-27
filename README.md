@@ -103,6 +103,18 @@ Useful options:
 * **Coordinates:** detection positions on the map are estimated from the drone's pose, the pixel bearing and the depth, so they are approximate.
 * **Purpose:** this is a simulation and research prototype. It has no facial recognition and no real drone or dispatch integration.
 
+## Tamper-evident recordings
+
+Every view has an evidence strip under the picture showing the capture date and time to the millisecond, the recording clock (`REC 00:01:23.456`) and the frame number. These are burned into the saved video, so a cut shows up as a jump in the clock or frame number.
+
+When you stop a recording, the server writes `data/<session>.manifest.json`. It contains the start and end times, every frame's timestamp, a SHA-256 hash chain over all frames, and the **SHA-256 fingerprints** of the video and dataset files. To check a recording, run:
+
+```
+python tools/verify_recording.py <session_name>     # or with no name, to check all recordings
+```
+
+It prints `VERIFIED` if the files are unchanged, or `TAMPERED` if even one byte differs. For evidence use, send the manifest (or its `video_sha256`) to the station at the end of the flight, so the fingerprint is kept somewhere the operator can't edit.
+
 ## Troubleshooting
 
 | Problem | Fix |

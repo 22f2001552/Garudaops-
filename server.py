@@ -95,6 +95,8 @@ class Handler(SimpleHTTPRequestHandler):
         if path == '/api/sessions':
             out = []
             for p in sorted((ROOT / 'data').glob('session_*.json'), reverse=True):
+                if p.name.endswith('.manifest.json'):
+                    continue
                 try:
                     d = json.loads(p.read_text())
                     out.append(dict(name=p.stem, video=d.get('video_filename'), duration=d.get('duration_sec'),

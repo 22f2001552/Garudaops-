@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtT = t => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 let T = null, lastSeq = 0, events = [], reviews = {}, view = 'detection', online = false, cfgSynced = false;
-let draftRoute = [], focusEvt = null;
+let draftRoute = [], focusEvt = null, wasRec = false;
 
 // ------------------------------------------------------------------ comms
 async function cmd(body, quiet) {
@@ -26,7 +26,7 @@ function label(b) {
 let toastTimer;
 function toast(msg, err) {
   const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 1800);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', msg.length > 60 ? 6000 : 1800);
 }
 
 async function poll() {
@@ -87,6 +87,11 @@ function render() {
   $('recBadge').hidden = !rec; $('recBtn').classList.toggle('on', !!rec);
   $('recBtn').textContent = rec ? '■ Stop recording' : '● Record flight';
   if (rec) $('recTime').textContent = fmtT(rec.seconds);
+  if (wasRec && !rec && t.last_manifest) {
+    const m = t.last_manifest;
+    toast(`Recording saved · ${m.frames} frames · SHA-256 ${String(m.video_sha256 || 'n/a').slice(0, 16)}…`);
+  }
+  wasRec = !!rec;
   if (!cfgSynced) syncCfg(t.cfg);
   // detections & log
   $('detBody').innerHTML = t.detections.length ? t.detections.map(d =>

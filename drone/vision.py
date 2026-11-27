@@ -327,3 +327,38 @@ def quad_view(views):
     cv2.line(q, (480, 0), (480, 540), (60, 60, 60), 2)
     cv2.line(q, (0, 270), (960, 270), (60, 60, 60), 2)
     return q
+
+
+# ------------------------------------------------------------------ evidence timestamp
+def fmt_ts(dt):
+    """2026-11-27 00:12:34.567 UTC+05:30  (local time, millisecond precision)."""
+    z = dt.strftime('%z') or '+0000'
+    return f"{dt:%Y-%m-%d %H:%M:%S}.{dt.microsecond // 1000:03d} UTC{z[:3]}:{z[3:]}"
+
+
+def fmt_elapsed(sec):
+    h, rem = divmod(max(0.0, sec), 3600)
+    m, s = divmod(rem, 60)
+    return f'{int(h):02d}:{int(m):02d}:{s:06.3f}'
+
+
+def stamp(img, dt, frame_no, source, rec_elapsed=None):
+    """Append a CCTV-style evidence strip under the image (never covers the picture):
+    capture date/time with ms · recording clock · frame number · source."""
+    H, W = img.shape[:2]
+    bar = np.zeros((34, W, 3), np.uint8)
+    bar[:] = (14, 14, 14)
+    cv2.line(bar, (0, 0), (W, 0), (70, 70, 70), 1)
+    cv2.putText(bar, fmt_ts(dt), (10, 23), FONT, 0.58, WHITE, 1, cv2.LINE_AA)
+    if rec_elapsed is not None:
+        mid = f'REC {fmt_elapsed(rec_elapsed)}'
+        (tw, _), _ = cv2.getTextSize(mid, FONT, 0.58, 2)
+        x = W // 2 - tw // 2
+        cv2.circle(bar, (x - 14, 17), 6, (40, 40, 230), -1, cv2.LINE_AA)
+        cv2.putText(bar, mid, (x, 23), FONT, 0.58, (90, 90, 255), 2, cv2.LINE_AA)
+    else:
+        cv2.putText(bar, 'LIVE', (W // 2 - 20, 23), FONT, 0.58, GREEN, 1, cv2.LINE_AA)
+    right = f'FRAME {frame_no:06d}  {source}'
+    (tw, _), _ = cv2.getTextSize(right, FONT, 0.5, 1)
+    cv2.putText(bar, right, (W - tw - 10, 23), FONT, 0.5, (190, 200, 210), 1, cv2.LINE_AA)
+    return np.vstack([img, bar])
